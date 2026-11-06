@@ -1,767 +1,133 @@
 <!DOCTYPE html>
-<html lang="it" class="h-full bg-slate-950 text-slate-100 select-none">
+<html lang="it">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Pet Wars 3D: La Conquista di Canicattini Bagni</title>
-  
-  <!-- Tailwind CSS & FontAwesome -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-  
-  <!-- Three.js (Engine 3D) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
+  <title>Canicattini Bagni: Pet Wars 3D Open World</title>
   <style>
-    body { font-family: 'Inter', sans-serif; overflow: hidden; }
-    h1, h2, h3, .font-orbitron { font-family: 'Orbitron', sans-serif; }
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background-color: #050811;
+      color: #fff;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+    }
+    #game-canvas { width: 100%; height: 100%; display: block; }
     
-    .glass-panel {
-      background: rgba(15, 23, 42, 0.75);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+    /* UI Overlay */
+    .ui-layer {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 16px;
+    }
+    .interactive { pointer-events: auto; }
+
+    /* Top HUD */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .hud-card {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(8px);
       border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 10px 16px;
+      border-radius: 12px;
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+    .stat-val { font-weight: 800; color: #f59e0b; font-size: 1.1rem; }
+    .district-badge {
+      background: #2563eb;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
     }
 
-    .glow-gold { box-shadow: 0 0 20px rgba(245, 158, 11, 0.4); }
-    .glow-red { box-shadow: 0 0 20px rgba(239, 68, 68, 0.4); }
-    .glow-cyan { box-shadow: 0 0 20px rgba(6, 182, 212, 0.4); }
-
-    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-    .custom-scrollbar::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); }
-    .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(51, 65, 85, 0.8); border-radius: 4px; }
-
-    @keyframes pulse-glow {
-      0%, 100% { filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.6)); }
-      50% { filter: drop-shadow(0 0 18px rgba(245, 158, 11, 0.9)); }
+    /* Controls overlay for Mobile / Touch */
+    .controls-panel {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      width: 100%;
     }
-    .animate-pulse-glow { animation: pulse-glow 2.5s infinite ease-in-out; }
+    
+    .touch-joystick {
+      width: 120px;
+      height: 120px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      position: relative;
+      touch-action: none;
+    }
+    .joystick-stick {
+      width: 50px;
+      height: 50px;
+      background: #f59e0b;
+      border-radius: 50%;
+      position: absolute;
+      top: 35px; left: 35px;
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+    }
+
+    .action-buttons {
+      display: grid;
+      grid-template-columns: repeat(2, 65px);
+      gap: 10px;
+    }
+    .btn-game {
+      width: 65px;
+      height: 65px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(30, 41, 59, 0.9);
+      color: white;
+      font-weight: bold;
+      font-size: 1.2rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .btn-game:active { transform: scale(0.92); }
+    .btn-attack { background: #dc2626; }
+    .btn-build { background: #16a34a; }
+    .btn-evolve { background: #8b5cf6; }
+
+    /* Minimap & Crosshair */
+    .crosshair {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 10px; height: 10px;
+      border: 2px solid rgba(255, 255, 255, 0.6);
+      border-radius: 50%;
+    }
+    .instruction {
+      position: absolute;
+      top: 70px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.6);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+    }
   </style>
 </head>
-<body class="h-full w-full bg-slate-950 flex flex-col relative text-slate-100">
+<body>
 
-  <!-- CANVAS 3D BACKGROUND (FULLSCREEN) -->
-  <div id="canvas-container" class="absolute inset-0 z-0"></div>
+  <canvas id="game-canvas"></canvas>
 
-  <!-- HUD IN-GAME (OVERLAY GLASSMORPHISM) -->
-  <div class="relative z-10 flex flex-col h-full pointer-events-none justify-between p-3 sm:p-5">
-
-    <!-- HEADER: Risorse & Info Fazione -->
-    <header class="flex flex-wrap justify-between items-center gap-3 w-full max-w-7xl mx-auto">
-      
-      <!-- Logo & Fazione -->
-      <div class="glass-panel p-2.5 sm:p-3 rounded-2xl flex items-center gap-3 pointer-events-auto border-amber-500/30">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-slate-950 text-xl font-black shadow-lg">
-          <i class="fa-solid fa-paw"></i>
-        </div>
-        <div>
-          <h1 class="text-xs sm:text-base font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-400 to-red-500 font-orbitron">
-            PET WARS 3D
-          </h1>
-          <p class="text-[10px] sm:text-xs text-slate-300 font-semibold flex items-center gap-1">
-            <i class="fa-solid fa-location-dot text-red-400"></i> Canicattini Bagni (SR)
-          </p>
-        </div>
-      </div>
-
-      <!-- Risorse Giocatore -->
-      <div class="glass-panel px-3 py-2 rounded-2xl flex items-center gap-3 sm:gap-5 text-xs sm:text-sm font-orbitron pointer-events-auto border-slate-700/50">
-        <div class="flex items-center gap-2" title="Monete">
-          <div class="w-6 h-6 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center text-xs border border-amber-500/40">
-            <i class="fa-solid fa-coins"></i>
-          </div>
-          <span id="ui-coins" class="font-bold text-amber-300">100</span>
-        </div>
-
-        <div class="h-4 w-[1px] bg-slate-700"></div>
-
-        <div class="flex items-center gap-2" title="Energia">
-          <div class="w-6 h-6 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-xs border border-cyan-500/40">
-            <i class="fa-solid fa-bolt"></i>
-          </div>
-          <span id="ui-energy" class="font-bold text-cyan-300">10/10</span>
-        </div>
-      </div>
-
-      <!-- Controllo Rotazione Telecamera Manuale -->
-      <div class="glass-panel px-3 py-2 rounded-2xl hidden md:flex items-center gap-2 text-xs text-slate-300 pointer-events-auto">
-        <i class="fa-solid fa-camera text-amber-400"></i>
-        <span>Trascina per ruotare la mappa 3D</span>
-      </div>
-
-    </header>
-
-    <!-- BANNER BOSS SETTIMANALE 3D -->
-    <div class="w-full max-w-md mx-auto my-auto pointer-events-auto transition-all duration-300">
-      <div class="glass-panel border-red-500/40 rounded-2xl p-3 sm:p-4 glow-red relative overflow-hidden">
-        <div class="flex justify-between items-center mb-2">
-          <span class="text-[10px] uppercase font-black tracking-widest text-red-400 font-orbitron flex items-center gap-1">
-            <i class="fa-solid fa-skull animate-bounce"></i> Boss Settimanale
-          </span>
-          <span class="text-[10px] text-slate-400 font-mono">Cerbero dell'Anapo</span>
-        </div>
-
-        <!-- Barra HP Boss -->
-        <div class="space-y-1 mb-3">
-          <div class="flex justify-between text-[11px] font-bold font-orbitron text-slate-200">
-            <span>Salute Boss 3D</span>
-            <span id="ui-boss-hp-text">8,500 / 10,000</span>
-          </div>
-          <div class="w-full bg-slate-950/80 rounded-full h-2.5 border border-slate-800 overflow-hidden">
-            <div id="ui-boss-hp-bar" class="bg-gradient-to-r from-red-600 via-orange-500 to-amber-400 h-full transition-all duration-500 rounded-full" style="width: 85%;"></div>
-          </div>
-        </div>
-
-        <button onclick="attackBoss3D()" class="w-full py-2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white font-black rounded-xl font-orbitron text-xs uppercase tracking-wider shadow-lg transition active:scale-95 flex items-center justify-center gap-2">
-          <i class="fa-solid fa-crosshairs"></i> Attacco Cooperativo Boss (-3⚡)
-        </button>
-      </div>
-    </div>
-
-    <!-- MAIN FOOTER HUD: Scheda Animale 3D, Quartiere Selezionato & Azioni -->
-    <footer class="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4 max-w-7xl w-full mx-auto pointer-events-auto">
-      
-      <!-- SCHEDA ANIMALE & EVOLUZIONE (4 Colonne) -->
-      <div class="lg:col-span-4 glass-panel rounded-2xl p-3.5 border-amber-500/20 flex flex-col justify-between">
-        <div class="flex items-center gap-3">
-          <div class="relative">
-            <div id="ui-pet-icon-box" class="w-14 h-14 rounded-xl bg-slate-950 border-2 border-amber-500/50 flex items-center justify-center text-2xl text-amber-400 shadow-inner glow-gold">
-              <i class="fa-solid fa-dog"></i>
-            </div>
-            <span id="ui-pet-lvl-badge" class="absolute -bottom-2 -right-2 bg-amber-500 text-slate-950 font-black font-orbitron text-[10px] w-5 h-5 rounded-full flex items-center justify-center border border-slate-900">1</span>
-          </div>
-
-          <div class="flex-1">
-            <div class="flex justify-between items-center">
-              <h3 id="ui-pet-name" class="font-bold text-sm text-slate-100 font-orbitron">Cane Randagio</h3>
-              <span id="ui-pet-power" class="text-xs font-black text-amber-400 font-orbitron">ATK: 10</span>
-            </div>
-            
-            <!-- XP Progress -->
-            <div class="space-y-1 mt-1.5">
-              <div class="flex justify-between text-[10px] text-slate-400 font-orbitron font-semibold">
-                <span>Progresso XP</span>
-                <span id="ui-pet-xp-text">0 / 100</span>
-              </div>
-              <div class="w-full bg-slate-950 rounded-full h-2 border border-slate-800 overflow-hidden">
-                <div id="ui-pet-xp-bar" class="bg-amber-400 h-full rounded-full transition-all duration-300 w-0"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <button id="btn-evolve" onclick="evolvePet3D()" class="w-full mt-3 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black rounded-xl font-orbitron text-xs uppercase tracking-wider transition shadow-lg flex items-center justify-center gap-1">
-          <i class="fa-solid fa-dna"></i> Evolvi Animale (150 🪙)
-        </button>
-      </div>
-
-      <!-- QUARTIERE SELEZIONATO & AZIONI (5 Colonne) -->
-      <div class="lg:col-span-5 glass-panel rounded-2xl p-3.5 border-slate-700/50 flex flex-col justify-between">
-        
-        <div class="flex justify-between items-center mb-2">
-          <div>
-            <span class="text-[10px] font-bold text-slate-400 uppercase font-orbitron">Quartiere Selezionato</span>
-            <h2 id="ui-district-name" class="text-base font-black text-amber-400 font-orbitron">San Giovanni</h2>
-          </div>
-          <span id="ui-district-owner" class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-950 border border-slate-800 text-cyan-400 font-orbitron">
-            Dominio: Cani
-          </span>
-        </div>
-
-        <!-- Selettore Quartieri Rapido per Mobile -->
-        <div id="district-buttons-grid" class="grid grid-cols-4 sm:grid-cols-8 gap-1 my-2">
-          <!-- Popolato via JS -->
-        </div>
-
-        <!-- Azioni di Combattimento sul Quartiere -->
-        <div class="grid grid-cols-3 gap-2 mt-1">
-          <button onclick="actionAttack3D()" class="py-2.5 px-2 bg-red-600 hover:bg-red-500 text-white font-black rounded-xl font-orbitron text-xs uppercase tracking-wider shadow transition active:scale-95 flex items-center justify-center gap-1">
-            <i class="fa-solid fa-burst"></i> Attacca
-          </button>
-          <button onclick="actionDefend3D()" class="py-2.5 px-2 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-xl font-orbitron text-xs uppercase tracking-wider shadow transition active:scale-95 flex items-center justify-center gap-1">
-            <i class="fa-solid fa-shield-halved"></i> Difendi
-          </button>
-          <button onclick="actionScout3D()" class="py-2.5 px-2 bg-cyan-600 hover:bg-cyan-500 text-white font-black rounded-xl font-orbitron text-xs uppercase tracking-wider shadow transition active:scale-95 flex items-center justify-center gap-1">
-            <i class="fa-solid fa-radar"></i> Esplora
-          </button>
-        </div>
-
-      </div>
-
-      <!-- LOG EVENTI IN TEMPO REALE (3 Colonne) -->
-      <div class="lg:col-span-3 glass-panel rounded-2xl p-3 border-slate-700/50 flex flex-col justify-between max-h-36 lg:max-h-full">
-        <div class="flex items-center justify-between mb-1.5">
-          <span class="text-[10px] uppercase font-bold text-slate-400 font-orbitron">Notizie Battaglia</span>
-          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-        </div>
-        <div id="ui-log-box" class="space-y-1.5 overflow-y-auto custom-scrollbar flex-1 pr-1 text-[11px]">
-          <!-- Eventi stampati via JS -->
-        </div>
-      </div>
-
-    </footer>
-
-  </div>
-
-  <!-- SCRIPT ENGINE THREE.JS & LOGICA DI GIOCO -->
-  <script>
-    /* ==========================================================================
-       DATI DI GIOCO & QUARTIERE REALE CANICATTINI BAGNI
-       ========================================================================== */
-
-    const DISTRICTS = [
-      { id: 'sg', name: 'San Giovanni', color: 0xef4444, owner: 'Cani', x: -6, z: -5 },
-      { id: 'bd', name: 'Badune', color: 0x3b82f6, owner: 'Gatti', x: 2, z: -6 },
-      { id: 'pz', name: 'Pizzumulu', color: 0x10b981, owner: 'Conigli', x: 7, z: -2 },
-      { id: 'bl', name: 'Balatazza', color: 0xf59e0b, owner: 'Cani', x: 5, z: 4 },
-      { id: 'pr', name: 'Priolo', color: 0x8b5cf6, owner: 'Gatti', x: -2, z: 6 },
-      { id: 'vg', name: 'Vigna', color: 0xec4899, owner: 'Conigli', x: -7, z: 2 },
-      { id: 'mt', name: 'Matrice', color: 0x06b6d4, owner: 'Cani', x: -1, z: 0 },
-      { id: 'st', name: 'Santuzzo', color: 0x84cc16, owner: 'Gatti', x: 3, z: -1 }
-    ];
-
-    const EVOLUTIONS = [
-      { level: 1, name: 'Cane Randagio', icon: 'fa-dog', power: 10, cost: 0, scale: 0.8, color: 0xf59e0b },
-      { level: 2, name: 'Lupo Guerriero', icon: 'fa-wolf-pack-battalion', power: 35, cost: 150, scale: 1.2, color: 0x06b6d4 },
-      { level: 3, name: 'Pantera d\'Assalto', icon: 'fa-cat', power: 85, cost: 400, scale: 1.6, color: 0xa855f7 },
-      { level: 4, name: 'Leone Titano Leggendario', icon: 'fa-shield-cat', power: 200, cost: 1000, scale: 2.2, color: 0xef4444 }
-    ];
-
-    let gameState = {
-      coins: 100,
-      energy: 10,
-      maxEnergy: 10,
-      currentEvolutionIdx: 0,
-      xp: 0,
-      selectedDistrictId: 'sg',
-      bossHp: 8500,
-      bossMaxHp: 10000
-    };
-
-    /* ==========================================================================
-       INIZIALIZZAZIONE THREE.JS 3D SCENE
-       ========================================================================== */
-
-    let scene, camera, renderer;
-    let districtMeshes = {};
-    let petMeshGroup, bossMeshGroup;
-    let particleSystems = [];
-    let isDragging = false, previousMousePosition = { x: 0, y: 0 };
-
-    function init3DScene() {
-      const container = document.getElementById('canvas-container');
-
-      // Scena 3D
-      scene = new THREE.Scene();
-      scene.background = new THREE.Color(0x070a13);
-      scene.fog = new THREE.FogExp2(0x070a13, 0.035);
-
-      // Telecamera
-      camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-      camera.position.set(0, 18, 26);
-      camera.lookAt(0, 0, 0);
-
-      // Renderer
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.shadowMap.enabled = true;
-      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-      container.appendChild(renderer.domElement);
-
-      // Illuminazione Dinamica
-      const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-      scene.add(ambientLight);
-
-      const dirLight = new THREE.DirectionalLight(0xffb703, 1.2);
-      dirLight.position.set(15, 25, 15);
-      dirLight.castShadow = true;
-      dirLight.shadow.mapSize.width = 1024;
-      dirLight.shadow.mapSize.height = 1024;
-      scene.add(dirLight);
-
-      const bluePointLight = new THREE.PointLight(0x3a86ff, 2, 40);
-      bluePointLight.position.set(-10, 8, -10);
-      scene.add(bluePointLight);
-
-      // Piattaforma Griglia di Canicattini Bagni
-      createTerritoryMap3D();
-
-      // Avatar Animale 3D & Boss 3D
-      createPet3DMesh();
-      createBoss3DMesh();
-
-      // Sistema di Particelle Ambientali (Polvere Olografica)
-      createAmbientParticles();
-
-      // Eventi di ridimensionamento e controllo rotazione telecamera
-      window.addEventListener('resize', onWindowResize);
-      setupCameraControls();
-
-      // Avvio Loop Animazione
-      animateLoop();
-    }
-
-    /* ==========================================================================
-       CREAZIONE ELEMENTI 3D (ISOLA, QUARTIERE, AVATAR, BOSS)
-       ========================================================================== */
-
-    function createTerritoryMap3D() {
-      // Base Griglia Principale Canicattini
-      const baseGeo = new THREE.CylinderGeometry(13, 14, 0.8, 8);
-      const baseMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.8, metalness: 0.2 });
-      const baseMesh = new THREE.Mesh(baseGeo, baseMat);
-      baseMesh.position.y = -0.5;
-      baseMesh.receiveShadow = true;
-      scene.add(baseMesh);
-
-      // Bordo Neon Griglia
-      const ringGeo = new THREE.RingGeometry(13, 13.3, 32);
-      const ringMat = new THREE.MeshBasicMaterial({ color: 0xf59e0b, side: THREE.DoubleSide });
-      const ringMesh = new THREE.Mesh(ringGeo, ringMat);
-      ringMesh.rotation.x = Math.PI / 2;
-      ringMesh.position.y = -0.05;
-      scene.add(ringMesh);
-
-      // Costruzione 8 Quartieri Reali come Torri/Piattaforme 3D
-      DISTRICTS.forEach(d => {
-        const group = new THREE.Group();
-        group.position.set(d.x, 0, d.z);
-
-        // Piattaforma Quartiere
-        const distGeo = new THREE.CylinderGeometry(1.8, 2, 1.2, 6);
-        const distMat = new THREE.MeshStandardMaterial({
-          color: d.color,
-          roughness: 0.4,
-          metalness: 0.6,
-          wireframe: false
-        });
-        const distMesh = new THREE.Mesh(distGeo, distMat);
-        distMesh.castShadow = true;
-        distMesh.receiveShadow = true;
-        group.add(distMesh);
-
-        // Torre Energetica Centrale
-        const towerGeo = new THREE.BoxGeometry(0.5, 2.5, 0.5);
-        const towerMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: d.color, emissiveIntensity: 0.6 });
-        const towerMesh = new THREE.Mesh(towerGeo, towerMat);
-        towerMesh.position.y = 1.2;
-        group.add(towerMesh);
-
-        // Anello di Selezione Olografico
-        const selGeo = new THREE.TorusGeometry(2.1, 0.08, 16, 32);
-        const selMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0 });
-        const selMesh = new THREE.Mesh(selGeo, selMat);
-        selMesh.rotation.x = Math.PI / 2;
-        selMesh.position.y = 0.1;
-        group.add(selMesh);
-
-        group.userData = { id: d.id, name: d.name, selMesh: selMesh, baseColor: d.color };
-        districtMeshes[d.id] = group;
-        scene.add(group);
-      });
-
-      // Strade Neon di Connessione tra Quartieri
-      const lineMat = new THREE.LineBasicMaterial({ color: 0x334155, linewidth: 2 });
-      DISTRICTS.forEach((d1, i) => {
-        DISTRICTS.forEach((d2, j) => {
-          if (i < j && Math.hypot(d1.x - d2.x, d1.z - d2.z) < 8) {
-            const points = [new THREE.Vector3(d1.x, 0.1, d1.z), new THREE.Vector3(d2.x, 0.1, d2.z)];
-            const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
-            const line = new THREE.Line(lineGeo, lineMat);
-            scene.add(line);
-          }
-        });
-      });
-    }
-
-    function createPet3DMesh() {
-      petMeshGroup = new THREE.Group();
-
-      // Corpo Procedurale Animale 3D
-      const bodyGeo = new THREE.DodecahedronGeometry(0.8, 1);
-      const bodyMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.3, metalness: 0.7 });
-      const bodyMesh = new THREE.Mesh(bodyGeo, bodyMat);
-      bodyMesh.castShadow = true;
-      petMeshGroup.add(bodyMesh);
-
-      // Occhi Luminosi
-      const eyeGeo = new THREE.SphereGeometry(0.15, 8, 8);
-      const eyeMat = new THREE.MeshBasicMaterial({ color: 0x06b6d4 });
-      const eyeL = new THREE.Mesh(eyeGeo, eyeMat);
-      eyeL.position.set(-0.3, 0.3, 0.65);
-      const eyeR = new THREE.Mesh(eyeGeo, eyeMat);
-      eyeR.position.set(0.3, 0.3, 0.65);
-      petMeshGroup.add(eyeL);
-      petMeshGroup.add(eyeR);
-
-      // Posizionamento iniziale su San Giovanni
-      petMeshGroup.position.set(-6, 2, -5);
-      scene.add(petMeshGroup);
-    }
-
-    function createBoss3DMesh() {
-      bossMeshGroup = new THREE.Group();
-
-      // Corazza Boss Cerbero 3D
-      const bossGeo = new THREE.IcosahedronGeometry(1.6, 1);
-      const bossMat = new THREE.MeshStandardMaterial({ color: 0xdc2626, emissive: 0x7f1d1d, emissiveIntensity: 0.8, wireframe: true });
-      const bossMesh = new THREE.Mesh(bossGeo, bossMat);
-      bossMeshGroup.add(bossMesh);
-
-      // Nucleo Energetico Interno
-      const coreGeo = new THREE.SphereGeometry(1, 16, 16);
-      const coreMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-      const coreMesh = new THREE.Mesh(coreGeo, coreMat);
-      bossMeshGroup.add(coreMesh);
-
-      bossMeshGroup.position.set(0, 3.5, 0);
-      scene.add(bossMeshGroup);
-    }
-
-    function createAmbientParticles() {
-      const pCount = 150;
-      const geometry = new THREE.BufferGeometry();
-      const positions = new Float32Array(pCount * 3);
-
-      for (let i = 0; i < pCount * 3; i += 3) {
-        positions[i] = (Math.random() - 0.5) * 40;
-        positions[i + 1] = Math.random() * 20;
-        positions[i + 2] = (Math.random() - 0.5) * 40;
-      }
-
-      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-      const material = new THREE.PointsMaterial({ color: 0xf59e0b, size: 0.15, transparent: true, opacity: 0.6 });
-      const particles = new THREE.Points(geometry, material);
-      scene.add(particles);
-      particleSystems.push(particles);
-    }
-
-    /* ==========================================================================
-       EFFETTI SPECIALE 3D & ANIMAZIONI (ESPLOSIONE & SCUDO)
-       ========================================================================== */
-
-    function triggerAttackParticles3D(targetPos) {
-      const pCount = 40;
-      const geometry = new THREE.BufferGeometry();
-      const positions = new Float32Array(pCount * 3);
-      const velocities = [];
-
-      for (let i = 0; i < pCount; i++) {
-        positions[i * 3] = targetPos.x;
-        positions[i * 3 + 1] = targetPos.y + 1;
-        positions[i * 3 + 2] = targetPos.z;
-
-        velocities.push(new THREE.Vector3(
-          (Math.random() - 0.5) * 0.4,
-          Math.random() * 0.4 + 0.1,
-          (Math.random() - 0.5) * 0.4
-        ));
-      }
-
-      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-      const material = new THREE.PointsMaterial({ color: 0xef4444, size: 0.3, transparent: true, opacity: 1 });
-      const pSystem = new THREE.Points(geometry, material);
-      scene.add(pSystem);
-
-      let frame = 0;
-      const anim = () => {
-        frame++;
-        const pos = pSystem.geometry.attributes.position.array;
-        for (let i = 0; i < pCount; i++) {
-          pos[i * 3] += velocities[i].x;
-          pos[i * 3 + 1] += velocities[i].y;
-          pos[i * 3 + 2] += velocities[i].z;
-        }
-        pSystem.geometry.attributes.position.needsUpdate = true;
-        material.opacity -= 0.03;
-
-        if (frame < 30) {
-          requestAnimationFrame(anim);
-        } else {
-          scene.remove(pSystem);
-        }
-      };
-      anim();
-    }
-
-    function triggerShieldEffect3D(targetPos) {
-      const shieldGeo = new THREE.SphereGeometry(2.3, 16, 16);
-      const shieldMat = new THREE.MeshBasicMaterial({ color: 0x10b981, transparent: true, opacity: 0.7, wireframe: true });
-      const shieldMesh = new THREE.Mesh(shieldGeo, shieldMat);
-      shieldMesh.position.set(targetPos.x, targetPos.y + 1, targetPos.z);
-      scene.add(shieldMesh);
-
-      let opacity = 0.7;
-      const fade = () => {
-        opacity -= 0.025;
-        shieldMat.opacity = opacity;
-        shieldMesh.scale.addScalar(0.015);
-        if (opacity > 0) {
-          requestAnimationFrame(fade);
-        } else {
-          scene.remove(shieldMesh);
-        }
-      };
-      fade();
-    }
-
-    /* ==========================================================================
-       CONTROLLE TELECAMERA & INTERAZIONE TOUCH/MOUSE
-       ========================================================================== */
-
-    function setupCameraControls() {
-      const container = document.getElementById('canvas-container');
-
-      container.addEventListener('pointerdown', (e) => {
-        isDragging = true;
-        previousMousePosition = { x: e.clientX, y: e.clientY };
-      });
-
-      container.addEventListener('pointermove', (e) => {
-        if (!isDragging) return;
-        const deltaX = e.clientX - previousMousePosition.x;
-
-        // Rotazione attorno al centro (0,0,0)
-        const radius = Math.hypot(camera.position.x, camera.position.z);
-        let angle = Math.atan2(camera.position.z, camera.position.x);
-        angle -= deltaX * 0.005;
-
-        camera.position.x = radius * Math.cos(angle);
-        camera.position.z = radius * Math.sin(angle);
-        camera.lookAt(0, 0, 0);
-
-        previousMousePosition = { x: e.clientX, y: e.clientY };
-      });
-
-      window.addEventListener('pointerup', () => isDragging = false);
-    }
-
-    function onWindowResize() {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    }
-
-    /* ==========================================================================
-       LOOP DI ANIMAZIONE 3D (RENDER LOOP)
-       ========================================================================== */
-
-    function animateLoop() {
-      requestAnimationFrame(animateLoop);
-
-      const time = Date.now() * 0.002;
-
-      // Animazione fluttuante Boss 3D
-      if (bossMeshGroup) {
-        bossMeshGroup.rotation.y += 0.015;
-        bossMeshGroup.rotation.x = Math.sin(time) * 0.2;
-        bossMeshGroup.position.y = 3.5 + Math.sin(time * 1.5) * 0.4;
-      }
-
-      // Animazione respirazione/rotazione Pet 3D
-      if (petMeshGroup) {
-        petMeshGroup.rotation.y += 0.01;
-        petMeshGroup.position.y = 1.5 + Math.sin(time * 3) * 0.15;
-      }
-
-      // Rotazione Torri dei Quartieri
-      Object.values(districtMeshes).forEach(group => {
-        const tower = group.children[1];
-        if (tower) tower.rotation.y += 0.02;
-      });
-
-      renderer.render(scene, camera);
-    }
-
-    /* ==========================================================================
-       LOGICA DI GIOCO & INTERFACCIA UTENTE
-       ========================================================================== */
-
-    function initUI() {
-      // Popola selettore quartieri rapido
-      const grid = document.getElementById('district-buttons-grid');
-      grid.innerHTML = '';
-
-      DISTRICTS.forEach(d => {
-        const btn = document.createElement('button');
-        btn.className = `py-1 text-[9px] font-orbitron font-bold rounded border transition text-center truncate px-1 ${
-          d.id === gameState.selectedDistrictId ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-slate-950/60 text-slate-300 border-slate-800'
-        }`;
-        btn.innerText = d.name;
-        btn.onclick = () => selectDistrict(d.id);
-        grid.appendChild(btn);
-      });
-
-      updateUI();
-    }
-
-    function selectDistrict(id) {
-      gameState.selectedDistrictId = id;
-
-      // Aggiorna evidenziazione 3D
-      Object.keys(districtMeshes).forEach(k => {
-        const group = districtMeshes[k];
-        const isSel = k === id;
-        group.userData.selMesh.material.opacity = isSel ? 0.9 : 0;
-      });
-
-      // Sposta smooth l'animale 3D sul quartiere selezionato
-      const distData = DISTRICTS.find(d => d.id === id);
-      if (distData && petMeshGroup) {
-        petMeshGroup.position.set(distData.x, 1.5, distData.z);
-      }
-
-      initUI();
-    }
-
-    function actionAttack3D() {
-      if (gameState.energy < 2) return addLog("⚡ Energia insufficiente!", "warning");
-      gameState.energy -= 2;
-
-      const dist = DISTRICTS.find(d => d.id === gameState.selectedDistrictId);
-      const pet = EVOLUTIONS[gameState.currentEvolutionIdx];
-
-      // Particelle 3D
-      triggerAttackParticles3D(new THREE.Vector3(dist.x, 0, dist.z));
-
-      const win = Math.random() > 0.35;
-      if (win) {
-        gameState.coins += 35;
-        gameState.xp += 40;
-        addLog(`⚔️ **Vittoria a ${dist.name}**! Guardie sconfitte (+35 🪙)`, "success");
-      } else {
-        addLog(`❌ Attacco respinto nei vicoli di **${dist.name}**!`, "danger");
-      }
-
-      checkXPLevelUp();
-      updateUI();
-    }
-
-    function actionDefend3D() {
-      if (gameState.energy < 1) return addLog("⚡ Energia insufficiente!", "warning");
-      gameState.energy -= 1;
-
-      const dist = DISTRICTS.find(d => d.id === gameState.selectedDistrictId);
-      triggerShieldEffect3D(new THREE.Vector3(dist.x, 0, dist.z));
-
-      gameState.xp += 20;
-      addLog(`🛡️ **Barriera 3D eretta** a protezione di **${dist.name}**!`, "info");
-      checkXPLevelUp();
-      updateUI();
-    }
-
-    function actionScout3D() {
-      if (gameState.energy < 1) return addLog("⚡ Energia insufficiente!", "warning");
-      gameState.energy -= 1;
-      gameState.coins += 20;
-      addLog(`🔍 Perlustrate le strade di Canicattini: trovate **20 Monete**!`, "info");
-      updateUI();
-    }
-
-    function attackBoss3D() {
-      if (gameState.energy < 3) return addLog("⚡ Energia insufficiente per il Boss!", "warning");
-      gameState.energy -= 3;
-
-      const pet = EVOLUTIONS[gameState.currentEvolutionIdx];
-      const damage = pet.power * 3 + Math.floor(Math.random() * 50);
-      gameState.bossHp = Math.max(0, gameState.bossHp - damage);
-
-      triggerAttackParticles3D(new THREE.Vector3(0, 3.5, 0));
-      gameState.coins += 60;
-      addLog(`💥 Danno devastante di **${damage}** al Cerbero dell'Anapo! (+60 🪙)`, "danger");
-
-      if (gameState.bossHp <= 0) {
-        addLog("👑 **BOSS SCONFITTO**! Canicattini Bagni è in festa! Reset Boss...", "success");
-        gameState.bossHp = gameState.bossMaxHp;
-      }
-
-      updateUI();
-    }
-
-    function checkXPLevelUp() {
-      const nextEv = EVOLUTIONS[gameState.currentEvolutionIdx + 1];
-      if (nextEv && gameState.xp >= nextEv.cost) {
-        document.getElementById('btn-evolve').classList.add('animate-pulse-glow');
-      }
-    }
-
-    function evolvePet3D() {
-      const nextEv = EVOLUTIONS[gameState.currentEvolutionIdx + 1];
-      if (!nextEv) return addLog("👑 Hai raggiunto la massima forma Titanica!", "warning");
-
-      if (gameState.coins >= nextEv.cost) {
-        gameState.coins -= nextEv.cost;
-        gameState.currentEvolutionIdx++;
-
-        // Scala il modello 3D dell'animale
-        if (petMeshGroup) {
-          petMeshGroup.scale.setScalar(nextEv.scale);
-          petMeshGroup.children[0].material.color.setHex(nextEv.color);
-        }
-
-        addLog(`✨ EVOLUZIONE! Il tuo animale si è trasformato in **${nextEv.name}**!`, "success");
-        updateUI();
-      } else {
-        addLog(`🪙 Servono **${nextEv.cost} Monete** per evolverti!`, "warning");
-      }
-    }
-
-    function updateUI() {
-      document.getElementById('ui-coins').innerText = gameState.coins;
-      document.getElementById('ui-energy').innerText = `${gameState.energy}/${gameState.maxEnergy}`;
-
-      const pet = EVOLUTIONS[gameState.currentEvolutionIdx];
-      document.getElementById('ui-pet-name').innerText = pet.name;
-      document.getElementById('ui-pet-power').innerText = `ATK: ${pet.power}`;
-      document.getElementById('ui-pet-lvl-badge').innerText = pet.level;
-      document.getElementById('ui-pet-icon-box').innerHTML = `<i class="fa-solid ${pet.icon}"></i>`;
-
-      const nextEv = EVOLUTIONS[gameState.currentEvolutionIdx + 1];
-      const maxExp = nextEv ? nextEv.cost : gameState.xp;
-      document.getElementById('ui-pet-xp-text').innerText = `${gameState.xp} / ${maxExp}`;
-      document.getElementById('ui-pet-xp-bar').style.width = `${Math.min(100, (gameState.xp / maxExp) * 100)}%`;
-
-      const dist = DISTRICTS.find(d => d.id === gameState.selectedDistrictId);
-      document.getElementById('ui-district-name').innerText = dist.name;
-      document.getElementById('ui-district-owner').innerText = `Dominio: ${dist.owner}`;
-
-      document.getElementById('ui-boss-hp-text').innerText = `${gameState.bossHp.toLocaleString()} / ${gameState.bossMaxHp.toLocaleString()}`;
-      document.getElementById('ui-boss-hp-bar').style.width = `${(gameState.bossHp / gameState.bossMaxHp) * 100}%`;
-    }
-
-    function addLog(msg, type = "info") {
-      const box = document.getElementById('ui-log-box');
-      const item = document.createElement('div');
-
-      let colorClass = "border-slate-700 text-slate-300";
-      if (type === "success") colorClass = "border-emerald-500/50 text-emerald-300 bg-emerald-950/30";
-      if (type === "danger") colorClass = "border-red-500/50 text-red-300 bg-red-950/30";
-      if (type === "warning") colorClass = "border-amber-500/50 text-amber-300 bg-amber-950/30";
-
-      item.className = `p-1.5 rounded border-l-2 ${colorClass} leading-tight backdrop-blur`;
-      item.innerHTML = msg.replace(/\*\*(.*?)\*\*/g, '<strong class="text-amber-400 font-semibold">$1</strong>');
-
-      box.prepend(item);
-      if (box.children.length > 15) box.removeChild(box.lastChild);
-    }
-
-    // Loop Rigenerazione Energia
-    setInterval(() => {
-      if (gameState.energy < gameState.maxEnergy) {
-        gameState.energy++;
-        updateUI();
-      }
-    }, 8000);
-
-    // AVVIO ALL'ONLOAD
-    window.onload = function() {
-      init3DScene();
-      initUI();
-      selectDistrict('sg');
-      addLog("Benvenuto a Canicattini Bagni 3D! Esplora la mappa e conquista i quartieri.");
-    };
-  </script>
-</body>
-</html>
