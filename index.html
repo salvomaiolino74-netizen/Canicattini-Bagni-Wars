@@ -3,20 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Canicattini Bagni: Pet Wars Open World</title>
+  <title>Canicattini Bagni 3D - GTA Style</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; touch-action: none; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background-color: #050811;
+      background-color: #87CEEB;
       color: #fff;
       overflow: hidden;
       width: 100vw;
       height: 100vh;
     }
-    #game-canvas { width: 100%; height: 100%; display: block; background: #0b1329; }
+    #game-canvas { width: 100%; height: 100%; display: block; }
     
-    /* UI Overlay */
+    /* UI Overlay stile GTA */
     .ui-layer {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -24,101 +24,79 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      padding: 12px;
+      padding: 16px;
     }
     .interactive { pointer-events: auto; }
 
-    /* Top HUD */
     .top-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 8px;
     }
-    .hud-card {
-      background: rgba(15, 23, 42, 0.9);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      padding: 8px 12px;
-      border-radius: 12px;
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      font-size: 0.85rem;
+    .hud-box {
+      background: rgba(0, 0, 0, 0.7);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 0.9rem;
+      backdrop-filter: blur(4px);
     }
-    .stat-val { font-weight: 800; color: #f59e0b; }
-    .district-badge {
-      background: #84cc16;
-      color: #000;
-      padding: 4px 10px;
+    .gold { color: #f59e0b; }
+    .district-hud {
+      background: #dc2626;
+      color: white;
+      padding: 6px 14px;
       border-radius: 20px;
-      font-size: 0.8rem;
-      font-weight: 800;
+      font-weight: 900;
       text-transform: uppercase;
+      font-size: 0.85rem;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
     }
 
-    /* Controls overlay for Mobile / Touch */
+    /* Controlli Touch Mobile */
     .controls-panel {
       display: flex;
       justify-content: space-between;
       align-items: flex-end;
       width: 100%;
-      padding-bottom: 8px;
+      padding-bottom: 10px;
     }
-    
     .touch-joystick {
-      width: 110px;
-      height: 110px;
-      background: rgba(255, 255, 255, 0.1);
-      border: 2px solid rgba(255, 255, 255, 0.3);
+      width: 120px;
+      height: 120px;
+      background: rgba(255, 255, 255, 0.15);
+      border: 2px solid rgba(255, 255, 255, 0.4);
       border-radius: 50%;
       position: relative;
     }
     .joystick-stick {
-      width: 44px;
-      height: 44px;
+      width: 50px;
+      height: 50px;
       background: #f59e0b;
       border-radius: 50%;
       position: absolute;
-      top: 33px; left: 33px;
-      box-shadow: 0 0 10px rgba(245, 158, 11, 0.6);
+      top: 35px; left: 35px;
+      box-shadow: 0 0 12px rgba(245, 158, 11, 0.8);
     }
-
-    .action-buttons {
+    .action-grid {
       display: grid;
       grid-template-columns: repeat(2, 60px);
-      gap: 10px;
+      gap: 12px;
     }
-    .btn-game {
-      width: 60px;
-      height: 60px;
+    .btn-action {
+      width: 60px; height: 60px;
       border-radius: 50%;
-      border: none;
-      background: rgba(30, 41, 59, 0.9);
+      border: 2px solid rgba(255,255,255,0.4);
+      background: rgba(0, 0, 0, 0.75);
       color: white;
-      font-weight: bold;
-      font-size: 1.2rem;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      font-size: 1.3rem;
+      display: flex; justify-content: center; align-items: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.6);
     }
-    .btn-game:active { transform: scale(0.92); }
-    .btn-attack { background: #dc2626; }
-    .btn-build { background: #16a34a; }
-    .btn-evolve { background: #8b5cf6; }
-
-    .instruction {
-      position: absolute;
-      top: 60px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0,0,0,0.7);
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      white-space: nowrap;
-    }
+    .btn-action:active { transform: scale(0.9); }
+    .btn-atk { background: #dc2626; }
+    .btn-bld { background: #16a34a; }
   </style>
 </head>
 <body>
@@ -127,328 +105,270 @@
 
   <div class="ui-layer">
     <div class="top-bar">
-      <div class="hud-card interactive">
-        <div>Evoluzione: <span id="player-evo" class="stat-val">Cane Randagio</span></div>
-        <div>🪙 <span id="player-coins" class="stat-val">150</span></div>
-      </div>
-      <div class="hud-card interactive">
-        <div id="current-district" class="district-badge">Matrice</div>
-      </div>
+      <div class="hud-box">🐾 <span id="player-evo">Cane Randagio</span> | 🪙 <span class="gold" id="player-coins">150</span></div>
+      <div class="district-hud" id="current-district">Matrice</div>
     </div>
 
-    <div class="instruction">Usa il Joystick o la Tastiera (WASD/Frecce) per muoverti</div>
-
     <div class="controls-panel">
-      <!-- Touch Joystick per Mobile -->
       <div class="touch-joystick interactive" id="joystick-zone">
         <div class="joystick-stick" id="joystick-stick"></div>
       </div>
-
-      <!-- Pulsanti d'Azione -->
-      <div class="action-buttons interactive">
-        <button class="btn-game btn-attack" onclick="handleAttack()">⚔️</button>
-        <button class="btn-game btn-build" onclick="handleBuild()">🏗️</button>
-        <button class="btn-game btn-evolve" onclick="handleEvolve()">✨</button>
-        <button class="btn-game" style="background:#3b82f6" onclick="handleAttack()">⚡</button>
+      <div class="action-grid interactive">
+        <button class="btn-action btn-atk" onclick="actionAttack()">⚔️</button>
+        <button class="btn-action btn-bld" onclick="actionBuild()">🏗️</button>
+        <button class="btn-action" style="background:#8b5cf6;" onclick="actionEvolve()">✨</button>
+        <button class="btn-action" style="background:#2563eb;" onclick="actionAttack()">⚡</button>
       </div>
     </div>
   </div>
 
+  <!-- Caricamento sicuro di Three.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script>
+    // --- SCENA & MOTORE 3D ---
     const canvas = document.getElementById('game-canvas');
-    const ctx = canvas.getContext('2d');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x87CEEB); // Cielo azzurro
+    scene.fog = new THREE.FogExp2(0x87CEEB, 0.003);
 
-    function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
+    const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1500);
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
 
-    // --- DATI QUARTIERI DI CANICATTINI BAGNI ---
+    // --- LUCI & SOLE ---
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+    scene.add(ambientLight);
+
+    const sunLight = new THREE.DirectionalLight(0xfffaed, 1.2);
+    sunLight.position.set(200, 400, 200);
+    sunLight.castShadow = true;
+    sunLight.shadow.mapSize.width = 2048;
+    sunLight.shadow.mapSize.height = 2048;
+    scene.add(sunLight);
+
+    // --- TERRENO (STRADE E CITTA') ---
+    const groundGeo = new THREE.PlaneGeometry(1500, 1500);
+    const groundMat = new THREE.MeshStandardMaterial({ color: 0x27272a, roughness: 0.9 });
+    const ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // --- QUARTIERI DI CANICATTINI BAGNI ---
     const DISTRICTS = [
-      { id: 'matrice', name: 'Matrice', color: '#ef4444', x: 0, y: -250, radius: 140 },
-      { id: 'sangiovanni', name: 'San Giovanni', color: '#f59e0b', x: -260, y: -100, radius: 130 },
-      { id: 'badune', name: 'Badune', color: '#3b82f6', x: 260, y: -80, radius: 130 },
-      { id: 'pizzumulu', name: 'Pizzumulu', color: '#10b981', x: 0, y: 50, radius: 120 },
-      { id: 'balatazza', name: 'Balatazza', color: '#8b5cf6', x: 280, y: 180, radius: 120 },
-      { id: 'priolo', name: 'Priolo', color: '#ec4899', x: -280, y: 160, radius: 120 },
-      { id: 'vigna', name: 'Vigna', color: '#06b6d4', x: -120, y: 320, radius: 130 },
-      { id: 'santuzzo', name: 'Santuzzo', color: '#84cc16', x: 140, y: 320, radius: 130 }
+      { name: 'Matrice', x: 0, z: -150, radius: 90, color: 0xef4444 },
+      { name: 'San Giovanni', x: -200, z: -60, radius: 85, color: 0xf59e0b },
+      { name: 'Badune', x: 200, z: -60, radius: 85, color: 0x3b82f6 },
+      { name: 'Pizzumulu', x: 0, z: 50, radius: 80, color: 0x10b981 },
+      { name: 'Balatazza', x: 220, z: 160, radius: 80, color: 0x8b5cf6 },
+      { name: 'Priolo', x: -220, z: 150, radius: 80, color: 0xec4899 },
+      { name: 'Vigna', x: -100, z: 270, radius: 85, color: 0x06b6d4 },
+      { name: 'Santuzzo', x: 120, z: 270, radius: 85, color: 0x84cc16 }
     ];
 
-    // Generazione Edifici Procedurali per Quartiere
-    const BUILDINGS = [];
+    // Generazione Palazzi e Strade 3D
+    const buildingMaterials = [
+      new THREE.MeshStandardMaterial({ color: 0xd4d4d8, roughness: 0.4 }),
+      new THREE.MeshStandardMaterial({ color: 0xa1a1aa, roughness: 0.5 }),
+      new THREE.MeshStandardMaterial({ color: 0x71717a, roughness: 0.6 }),
+      new THREE.MeshStandardMaterial({ color: 0x52525b, roughness: 0.5 })
+    ];
+
     DISTRICTS.forEach(d => {
-      for (let i = 0; i < 6; i++) {
-        const angle = (i / 6) * Math.PI * 2;
-        const dist = 40 + Math.random() * (d.radius - 70);
-        BUILDINGS.push({
-          x: d.x + Math.cos(angle) * dist,
-          y: d.y + Math.sin(angle) * dist,
-          w: 40 + Math.random() * 20,
-          h: 40 + Math.random() * 20,
-          color: '#1e293b'
-        });
+      for (let i = 0; i < 10; i++) {
+        const angle = (i / 10) * Math.PI * 2;
+        const dist = 30 + Math.random() * (d.radius - 40);
+        const w = 14 + Math.random() * 12;
+        const h = 20 + Math.random() * 45;
+        const l = 14 + Math.random() * 12;
+
+        const bGeo = new THREE.BoxGeometry(w, h, l);
+        const bMat = buildingMaterials[Math.floor(Math.random() * buildingMaterials.length)];
+        const building = new THREE.Mesh(bGeo, bMat);
+
+        building.position.set(d.x + Math.cos(angle) * dist, h / 2, d.z + Math.sin(angle) * dist);
+        building.castShadow = true;
+        building.receiveShadow = true;
+        scene.add(building);
       }
     });
 
-    // Avamposti Costruiti dal Giocatore
-    const OUTPOSTS = [];
-    const EFFECTS = [];
+    // Macchine parcheggiate stile GTA
+    const carColors = [0xdc2626, 0x2563eb, 0x16a34a, 0x111827];
+    for (let i = 0; i < 15; i++) {
+      const cGeo = new THREE.BoxGeometry(6, 3, 12);
+      const cMat = new THREE.MeshStandardMaterial({ color: carColors[Math.floor(Math.random() * carColors.length)], metalness: 0.6 });
+      const car = new THREE.Mesh(cGeo, cMat);
+      const rx = (Math.random() - 0.5) * 600;
+      const rz = (Math.random() - 0.5) * 600;
+      car.position.set(rx, 1.5, rz);
+      car.rotation.y = Math.random() * Math.PI;
+      car.castShadow = true;
+      scene.add(car);
+    }
 
-    // --- STATO GIOCATORE ---
+    // --- PERSONAGGIO IN TERZA PERSONA (AVATAR 3D) ---
+    const playerGroup = new THREE.Group();
+
+    // Corpo Animale 3D
+    const bodyGeo = new THREE.BoxGeometry(2.2, 2.2, 4.5);
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.3 });
+    const pBody = new THREE.Mesh(bodyGeo, bodyMat);
+    pBody.position.y = 1.5;
+    pBody.castShadow = true;
+    playerGroup.add(pBody);
+
+    // Testa
+    const headGeo = new THREE.BoxGeometry(1.8, 1.8, 2);
+    const headMat = new THREE.MeshStandardMaterial({ color: 0xb45309 });
+    const pHead = new THREE.Mesh(headGeo, headMat);
+    pHead.position.set(0, 2.6, -1.8);
+    pHead.castShadow = true;
+    playerGroup.add(pHead);
+
+    scene.add(playerGroup);
+    playerGroup.position.set(0, 0, 0);
+
+    // --- STATO DEL GIOCO & EVOLUZIONI ---
     const EVOLUTIONS = [
-      { name: 'Cane Randagio', icon: '🐕', speed: 4, power: 10, color: '#d97706' },
-      { name: 'Lupo Guerriero', icon: '🐺', speed: 5, power: 30, color: '#475569' },
-      { name: 'Pantera d\'Assalto', icon: '🐆', speed: 6.5, power: 75, color: '#1e1b4b' },
-      { name: 'Leone Titano', icon: '🦁', speed: 8, power: 180, color: '#eab308' }
+      { name: 'Cane Randagio', icon: '🐕', speed: 0.8, color: 0xd97706 },
+      { name: 'Lupo Guerriero', icon: '🐺', speed: 1.1, color: 0x475569 },
+      { name: 'Pantera d\'Assalto', icon: '🐆', speed: 1.4, color: 0x1e1b4b },
+      { name: 'Leone Titano', icon: '🦁', speed: 1.8, color: 0xeab308 }
     ];
+    let playerState = { evoIdx: 0, coins: 150 };
 
-    let player = {
-      x: 0,
-      y: 0,
-      evoIndex: 0,
-      coins: 150,
-      angle: 0
-    };
-
-    let input = { x: 0, y: 0 };
+    // --- INPUT E CONTROLLI (GTA STYLE) ---
+    let moveInput = { x: 0, y: 0 };
+    let playerAngle = 0;
     const keys = {};
 
     window.addEventListener('keydown', e => keys[e.code] = true);
     window.addEventListener('keyup', e => keys[e.code] = false);
 
-    // Controlli Touch (Joystick)
+    // Joystick Touch
     const joystickZone = document.getElementById('joystick-zone');
     const joystickStick = document.getElementById('joystick-stick');
     let touchId = null;
 
     joystickZone.addEventListener('touchstart', e => {
-      e.preventDefault();
-      const touch = e.changedTouches[0];
-      touchId = touch.identifier;
-      updateJoystick(touch);
+      const t = e.changedTouches[0];
+      touchId = t.identifier;
+      updateJoystick(t);
     });
-
     window.addEventListener('touchmove', e => {
-      for (let touch of e.changedTouches) {
-        if (touch.identifier === touchId) {
-          updateJoystick(touch);
-        }
+      for (let t of e.changedTouches) {
+        if (t.identifier === touchId) updateJoystick(t);
       }
     });
-
     window.addEventListener('touchend', e => {
-      for (let touch of e.changedTouches) {
-        if (touch.identifier === touchId) {
+      for (let t of e.changedTouches) {
+        if (t.identifier === touchId) {
           touchId = null;
-          input = { x: 0, y: 0 };
-          joystickStick.style.top = '33px';
-          joystickStick.style.left = '33px';
+          moveInput = { x: 0, y: 0 };
+          joystickStick.style.top = '35px';
+          joystickStick.style.left = '35px';
         }
       }
     });
 
-    function updateJoystick(touch) {
+    function updateJoystick(t) {
       const rect = joystickZone.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
-      const dx = touch.clientX - centerX;
-      const dy = touch.clientY - centerY;
-      const dist = Math.min(35, Math.hypot(dx, dy));
+      const dx = t.clientX - (rect.left + rect.width / 2);
+      const dy = t.clientY - (rect.top + rect.height / 2);
+      const dist = Math.min(45, Math.hypot(dx, dy));
       const angle = Math.atan2(dy, dx);
-
-      joystickStick.style.left = `${33 + Math.cos(angle) * dist}px`;
-      joystickStick.style.top = `${33 + Math.sin(angle) * dist}px`;
-
-      input.x = (Math.cos(angle) * dist) / 35;
-      input.y = (Math.sin(angle) * dist) / 35;
+      joystickStick.style.left = `${35 + Math.cos(angle) * dist}px`;
+      joystickStick.style.top = `${35 + Math.sin(angle) * dist}px`;
+      moveInput.x = (Math.cos(angle) * dist) / 45;
+      moveInput.y = (Math.sin(angle) * dist) / 45;
     }
 
-    // --- AZIONI GIOCATORE ---
-    function handleAttack() {
-      EFFECTS.push({
-        x: player.x,
-        y: player.y,
-        radius: 10,
-        maxRadius: 70,
-        color: '#dc2626',
-        alpha: 1
-      });
-      player.coins += 15;
+    // --- AZIONI ---
+    function actionAttack() {
+      playerState.coins += 25;
       updateUI();
     }
-
-    function handleBuild() {
-      if (player.coins < 40) return;
-      player.coins -= 40;
-      OUTPOSTS.push({ x: player.x, y: player.y, color: '#16a34a' });
+    function actionBuild() {
+      if (playerState.coins < 50) return;
+      playerState.coins -= 50;
+      const bGeo = new THREE.CylinderGeometry(3, 4, 10, 8);
+      const bMat = new THREE.MeshStandardMaterial({ color: 0x16a34a });
+      const tower = new THREE.Mesh(bGeo, bMat);
+      tower.position.copy(playerGroup.position);
+      tower.position.y = 5;
+      scene.add(tower);
       updateUI();
     }
-
-    function handleEvolve() {
-      if (player.evoIndex >= EVOLUTIONS.length - 1) return;
-      const cost = (player.evoIndex + 1) * 100;
-      if (player.coins < cost) return;
-      player.coins -= cost;
-      player.evoIndex++;
-      EFFECTS.push({
-        x: player.x,
-        y: player.y,
-        radius: 10,
-        maxRadius: 100,
-        color: '#8b5cf6',
-        alpha: 1
-      });
+    function actionEvolve() {
+      if (playerState.evoIdx >= EVOLUTIONS.length - 1) return;
+      const cost = (playerState.evoIdx + 1) * 100;
+      if (playerState.coins < cost) return;
+      playerState.coins -= cost;
+      playerState.evoIdx++;
+      pBody.material.color.setHex(EVOLUTIONS[playerState.evoIdx].color);
+      playerGroup.scale.multiplyScalar(1.15);
       updateUI();
     }
-
     function updateUI() {
-      document.getElementById('player-coins').innerText = player.coins;
-      document.getElementById('player-evo').innerText = EVOLUTIONS[player.evoIndex].name;
+      document.getElementById('player-coins').innerText = playerState.coins;
+      document.getElementById('player-evo').innerText = EVOLUTIONS[playerState.evoIdx].name;
     }
 
-    // --- GAME LOOP ---
-    function update() {
-      // Input Tastiera
+    // --- LOOP DI GIOCO 3D ---
+    function animate() {
+      requestAnimationFrame(animate);
+
+      // Gestione Movimento
       let kX = 0, kY = 0;
       if (keys['KeyW'] || keys['ArrowUp']) kY -= 1;
       if (keys['KeyS'] || keys['ArrowDown']) kY += 1;
       if (keys['KeyA'] || keys['ArrowLeft']) kX -= 1;
       if (keys['KeyD'] || keys['ArrowRight']) kX += 1;
 
-      const moveX = input.x || kX;
-      const moveY = input.y || kY;
+      const mx = moveInput.x || kX;
+      const my = moveInput.y || kY;
+      const currentEv = EVOLUTIONS[playerState.evoIdx];
 
-      const currentEvo = EVOLUTIONS[player.evoIndex];
-
-      if (Math.hypot(moveX, moveY) > 0.1) {
-        player.x += moveX * currentEvo.speed;
-        player.y += moveY * currentEvo.speed;
-        player.angle = Math.atan2(moveY, moveX);
+      if (Math.hypot(mx, my) > 0.1) {
+        const speed = currentEv.speed;
+        playerGroup.position.x += mx * speed;
+        playerGroup.position.z += my * speed;
+        playerAngle = Math.atan2(mx, my);
+        playerGroup.rotation.y = playerAngle;
       }
 
-      // Controllo Quartiere Corrente
-      let currentDistName = 'Periferia';
-      let currentDistColor = '#84cc16';
+      // Telecamera Terza Persona (GTA Style dietro al personaggio)
+      const camDist = 22;
+      const camHeight = 10;
+      camera.position.x = playerGroup.position.x - Math.sin(playerAngle) * camDist;
+      camera.position.z = playerGroup.position.z - Math.cos(playerAngle) * camDist;
+      camera.position.y = playerGroup.position.y + camHeight;
+      camera.lookAt(playerGroup.position.x, playerGroup.position.y + 2, playerGroup.position.z);
+
+      // Rilevamento Quartiere
+      let activeDistrict = 'Periferia Canicattini';
+      let activeColor = '#dc2626';
       DISTRICTS.forEach(d => {
-        const dist = Math.hypot(player.x - d.x, player.y - d.y);
+        const dist = Math.hypot(playerGroup.position.x - d.x, playerGroup.position.z - d.z);
         if (dist < d.radius) {
-          currentDistName = d.name;
-          currentDistColor = d.color;
+          activeDistrict = d.name;
         }
       });
-      const badge = document.getElementById('current-district');
-      badge.innerText = currentDistName;
-      badge.style.background = currentDistColor;
+      document.getElementById('current-district').innerText = activeDistrict;
+
+      renderer.render(scene, camera);
     }
 
-    function render() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
 
-      ctx.save();
-      // Telecamera centrata sul giocatore
-      ctx.translate(canvas.width / 2 - player.x, canvas.height / 2 - player.y);
-
-      // 1. Griglia di Sfondo / Strade
-      ctx.strokeStyle = '#1e293b';
-      ctx.lineWidth = 1;
-      const gridSize = 80;
-      for (let x = -1000; x <= 1000; x += gridSize) {
-        ctx.beginPath(); ctx.moveTo(x, -1000); ctx.lineTo(x, 1000); ctx.stroke();
-      }
-      for (let y = -1000; y <= 1000; y += gridSize) {
-        ctx.beginPath(); ctx.moveTo(-1000, y); ctx.lineTo(1000, y); ctx.stroke();
-      }
-
-      // 2. Disegna Quartieri (Zone Circolari con Confini)
-      DISTRICTS.forEach(d => {
-        ctx.beginPath();
-        ctx.arc(d.x, d.y, d.radius, 0, Math.PI * 2);
-        ctx.fillStyle = d.color + '1a';
-        ctx.fill();
-        ctx.strokeStyle = d.color;
-        ctx.lineWidth = 3;
-        ctx.setLineDash([8, 8]);
-        ctx.stroke();
-        ctx.setLineDash([]);
-
-        // Nome Quartiere al centro
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 16px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(d.name, d.x, d.y);
-      });
-
-      // 3. Edifici
-      BUILDINGS.forEach(b => {
-        ctx.fillStyle = b.color;
-        ctx.fillRect(b.x - b.w / 2, b.y - b.h / 2, b.w, b.h);
-        ctx.strokeStyle = '#334155';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(b.x - b.w / 2, b.y - b.h / 2, b.w, b.h);
-      });
-
-      // 4. Avamposti Costruiti
-      OUTPOSTS.forEach(o => {
-        ctx.fillStyle = o.color;
-        ctx.beginPath();
-        ctx.arc(o.x, o.y, 14, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-      });
-
-      // 5. Effetti Visivi
-      for (let i = EFFECTS.length - 1; i >= 0; i--) {
-        const e = EFFECTS[i];
-        e.radius += 3;
-        e.alpha -= 0.04;
-        if (e.alpha <= 0) {
-          EFFECTS.splice(i, 1);
-          continue;
-        }
-        ctx.beginPath();
-        ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2);
-        ctx.strokeStyle = e.color;
-        ctx.globalAlpha = e.alpha;
-        ctx.lineWidth = 4;
-        ctx.stroke();
-        ctx.globalAlpha = 1;
-      }
-
-      // 6. Giocatore (Avatar Animale)
-      const currentEvo = EVOLUTIONS[player.evoIndex];
-      ctx.save();
-      ctx.translate(player.x, player.y);
-      ctx.rotate(player.angle);
-
-      // Cerchio Aura
-      ctx.beginPath();
-      ctx.arc(0, 0, 22, 0, Math.PI * 2);
-      ctx.fillStyle = currentEvo.color + '44';
-      ctx.fill();
-
-      // Icona Animale
-      ctx.font = '26px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(currentEvo.icon, 0, 0);
-
-      ctx.restore();
-
-      ctx.restore();
-    }
-
-    function loop() {
-      update();
-      render();
-      requestAnimationFrame(loop);
-    }
-
-    loop();
+    animate();
   </script>
 </body>
 </html>
