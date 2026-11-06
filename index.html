@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Canicattini Bagni 3D - GTA Style HD + Pugni & Combattimento</title>
+  <title>Canicattini Bagni 3D - GTA Style HD</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; touch-action: none; }
     body {
@@ -209,13 +209,14 @@
       const bTex2 = createBuildingTexture('#778da9', '#e0e1dd');
       const buildingColliders = [];
 
+      // Generazione palazzi mantenendo un corridoio centrale sgombro per lo spawn
       DISTRICTS.forEach(d => {
         for (let i = 0; i < 8; i++) {
           const angle = (i / 8) * Math.PI * 2;
-          const dist = 30 + Math.random() * (d.radius - 40);
-          const w = 18 + Math.random() * 8;
+          const dist = 35 + Math.random() * (d.radius - 45);
+          const w = 16 + Math.random() * 8;
           const h = 22 + Math.random() * 30;
-          const l = 18 + Math.random() * 8;
+          const l = 16 + Math.random() * 8;
 
           const bGeo = new THREE.BoxGeometry(w, h, l);
           const bMat = new THREE.MeshStandardMaterial({ map: i % 2 === 0 ? bTex1 : bTex2, roughness: 0.5 });
@@ -238,8 +239,9 @@
         }
       });
 
-      // --- CREAZIONE GIOCATORE ---
+      // --- CREAZIONE GIOCATORE (SPAWN SICURO AL CENTRO 0,0) ---
       const playerGroup = new THREE.Group();
+      playerGroup.position.set(0, 0, 0); // Centro mappa sicuro senza palazzi sopra
       const bodyMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.5 });
 
       const torso = new THREE.Mesh(new THREE.BoxGeometry(2, 3, 1.2), bodyMat);
@@ -310,8 +312,8 @@
 
       for (let i = 0; i < 6; i++) {
         const data = createHumanNPCMesh(humanColors[i % humanColors.length], 0x1f2937);
-        const rx = (Math.random() - 0.5) * 400;
-        const rz = (Math.random() - 0.5) * 400;
+        const rx = (Math.random() - 0.5) * 300;
+        const rz = (Math.random() - 0.5) * 300;
         data.mesh.position.set(rx, 0, rz);
         scene.add(data.mesh);
 
@@ -331,8 +333,8 @@
 
       for (let i = 0; i < 6; i++) {
         const data = createAnimalNPCMesh(animalColors[i % animalColors.length]);
-        const rx = (Math.random() - 0.5) * 400;
-        const rz = (Math.random() - 0.5) * 400;
+        const rx = (Math.random() - 0.5) * 300;
+        const rz = (Math.random() - 0.5) * 300;
         data.mesh.position.set(rx, 0, rz);
         scene.add(data.mesh);
 
@@ -351,7 +353,6 @@
       }
 
       function updateNPC_AI(npc) {
-        // Gestione Animazione Impatto / Colpo Ricevuto
         if (npc.hitTimer > 0) {
           npc.hitTimer--;
           npc.mesh.rotation.z = Math.sin(npc.hitTimer * 0.5) * 0.4;
@@ -365,23 +366,12 @@
 
         if (npc.decisionTimer <= 0) {
           npc.decisionTimer = 100 + Math.floor(Math.random() * 150);
-          npc.targetX = npc.mesh.position.x + (Math.random() - 0.5) * 120;
-          npc.targetZ = npc.mesh.position.z + (Math.random() - 0.5) * 120;
+          npc.targetX = npc.mesh.position.x + (Math.random() - 0.5) * 100;
+          npc.targetZ = npc.mesh.position.z + (Math.random() - 0.5) * 100;
 
           if (Math.random() < 0.25 && npc.isGrounded) {
             npc.velocityY = 0.42;
             npc.isGrounded = false;
-          }
-
-          if (Math.random() < 0.15) {
-            const tower = new THREE.Mesh(
-              new THREE.CylinderGeometry(2, 3, 8, 8),
-              new THREE.MeshStandardMaterial({ color: npc.type === 'human' ? 0x2563eb : 0xdc2626 })
-            );
-            tower.position.copy(npc.mesh.position);
-            tower.position.y = 4;
-            tower.castShadow = true;
-            scene.add(tower);
           }
         }
 
@@ -431,7 +421,7 @@
         }
       }
 
-      // --- FISICA E COMBATTIMENTO GIOCATORE ---
+      // --- CONTROLLI GIOCATORE ---
       let velocityY = 0;
       let isGrounded = true;
       let punchTimer = 0;
@@ -497,16 +487,14 @@
 
       window.actionPunch = function() {
         if (punchTimer === 0) {
-          punchTimer = 18; // Durata animazione del pugno
-
-          // Controllo NPC nel raggio d'attacco
+          punchTimer = 18;
           npcs.forEach(npc => {
             const dist = Math.hypot(
               playerGroup.position.x - npc.mesh.position.x,
               playerGroup.position.z - npc.mesh.position.z
             );
             if (dist < 6) {
-              npc.hitTimer = 25; // Attiva l'animazione di sbalzo dell'NPC
+              npc.hitTimer = 25;
               playerState.coins += 15;
               updateUI();
             }
@@ -600,7 +588,6 @@
           leftArm.rotation.x = 0; rightArm.rotation.x = 0;
         }
 
-        // Animazione Pugno del Giocatore
         if (punchTimer > 0) {
           punchTimer--;
           const punchProgress = Math.sin((18 - punchTimer) / 18 * Math.PI);
@@ -610,7 +597,6 @@
           rightArm.position.z = 0;
         }
 
-        // Fisica Gravità
         if (!isGrounded || velocityY !== 0) {
           playerGroup.position.y += velocityY;
           velocityY += gravity;
@@ -622,10 +608,8 @@
           }
         }
 
-        // Aggiornamento IA NPC
         npcs.forEach(npc => updateNPC_AI(npc));
 
-        // Telecamera Terza Persona
         const camDist = 22;
         const camHeight = 11;
         camera.position.x = playerGroup.position.x - Math.sin(playerAngle) * camDist;
@@ -633,7 +617,7 @@
         camera.position.y = playerGroup.position.y + camHeight;
         camera.lookAt(playerGroup.position.x, playerGroup.position.y + 3.5, playerGroup.position.z);
 
-        let activeDistrict = 'Periferia Canicattini';
+        let activeDistrict = 'Matrice (Centro)';
         DISTRICTS.forEach(d => {
           const dist = Math.hypot(playerGroup.position.x - d.x, playerGroup.position.z - d.z);
           if (dist < d.radius) activeDistrict = d.name;
