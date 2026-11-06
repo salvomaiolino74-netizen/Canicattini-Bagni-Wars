@@ -80,22 +80,23 @@
     }
     .action-grid {
       display: grid;
-      grid-template-columns: repeat(2, 60px);
-      gap: 12px;
+      grid-template-columns: repeat(3, 55px);
+      gap: 10px;
     }
     .btn-action {
-      width: 60px; height: 60px;
+      width: 55px; height: 55px;
       border-radius: 50%;
       border: 2px solid rgba(255,255,255,0.4);
       background: rgba(0, 0, 0, 0.75);
       color: white;
-      font-size: 1.3rem;
+      font-size: 1.2rem;
       display: flex; justify-content: center; align-items: center;
       box-shadow: 0 4px 12px rgba(0,0,0,0.6);
     }
     .btn-action:active { transform: scale(0.9); }
     .btn-atk { background: #dc2626; }
     .btn-bld { background: #16a34a; }
+    .btn-jmp { background: #eab308; }
   </style>
 </head>
 <body>
@@ -113,6 +114,7 @@
         <div class="joystick-stick" id="joystick-stick"></div>
       </div>
       <div class="action-grid interactive">
+        <button class="btn-action btn-jmp" onclick="actionJump()">🦘</button>
         <button class="btn-action btn-atk" onclick="actionAttack()">⚔️</button>
         <button class="btn-action btn-bld" onclick="actionBuild()">🏗️</button>
         <button class="btn-action" style="background:#8b5cf6;" onclick="actionEvolve()">✨</button>
@@ -124,7 +126,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script>
     window.addEventListener('load', () => {
-      // --- GENERAZIONE SICURA DELLE TEXTURE ---
       function createAsphaltTexture() {
         const c = document.createElement('canvas');
         c.width = 256; c.height = 256;
@@ -167,7 +168,6 @@
         return tex;
       }
 
-      // --- MOTORE E SCENA 3D ---
       const canvas = document.getElementById('game-canvas');
       const scene = new THREE.Scene();
       scene.background = new THREE.Color(0x87CEEB);
@@ -179,7 +179,6 @@
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       renderer.shadowMap.enabled = true;
 
-      // Luci
       const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
       scene.add(ambientLight);
 
@@ -188,7 +187,6 @@
       sunLight.castShadow = true;
       scene.add(sunLight);
 
-      // Terreno Asfalto
       const groundGeo = new THREE.PlaneGeometry(1500, 1500);
       const groundMat = new THREE.MeshStandardMaterial({ map: createAsphaltTexture(), roughness: 0.8 });
       const ground = new THREE.Mesh(groundGeo, groundMat);
@@ -196,7 +194,6 @@
       ground.receiveShadow = true;
       scene.add(ground);
 
-      // Quartieri e Palazzi
       const DISTRICTS = [
         { name: 'Matrice', x: 0, z: -150, radius: 90 },
         { name: 'San Giovanni', x: -200, z: -60, radius: 85 },
@@ -208,219 +205,4 @@
         { name: 'Santuzzo', x: 120, z: 270, radius: 85 }
       ];
 
-      const bTex1 = createBuildingTexture('#d4a373', '#fefae0');
-      const bTex2 = createBuildingTexture('#778da9', '#e0e1dd');
-
-      DISTRICTS.forEach(d => {
-        for (let i = 0; i < 8; i++) {
-          const angle = (i / 8) * Math.PI * 2;
-          const dist = 30 + Math.random() * (d.radius - 40);
-          const w = 16 + Math.random() * 8;
-          const h = 20 + Math.random() * 30;
-          const l = 16 + Math.random() * 8;
-
-          const bGeo = new THREE.BoxGeometry(w, h, l);
-          const bMat = new THREE.MeshStandardMaterial({ map: i % 2 === 0 ? bTex1 : bTex2, roughness: 0.5 });
-          const building = new THREE.Mesh(bGeo, bMat);
-
-          building.position.set(d.x + Math.cos(angle) * dist, h / 2, d.z + Math.sin(angle) * dist);
-          building.castShadow = true;
-          building.receiveShadow = true;
-          scene.add(building);
-        }
-      });
-
-      // --- AVATAR HUMANOIDE 3D ---
-      const playerGroup = new THREE.Group();
-      const bodyMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.5 });
-
-      // Torso
-      const torso = new THREE.Mesh(new THREE.BoxGeometry(2, 3, 1.2), bodyMat);
-      torso.position.y = 3;
-      torso.castShadow = true;
-      playerGroup.add(torso);
-
-      // Testa
-      const head = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.5, 1.5), bodyMat);
-      head.position.y = 5.25;
-      head.castShadow = true;
-      playerGroup.add(head);
-
-      // Muso
-      const snout = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.6, 0.8), new THREE.MeshStandardMaterial({ color: 0x111111 }));
-      snout.position.set(0, 5, 0.9);
-      playerGroup.add(snout);
-
-      // Braccia
-      const armGeo = new THREE.BoxGeometry(0.7, 2.5, 0.7);
-      const leftArm = new THREE.Mesh(armGeo, bodyMat);
-      leftArm.position.set(-1.4, 3, 0);
-      leftArm.castShadow = true;
-      playerGroup.add(leftArm);
-
-      const rightArm = new THREE.Mesh(armGeo, bodyMat);
-      rightArm.position.set(1.4, 3, 0);
-      rightArm.castShadow = true;
-      playerGroup.add(rightArm);
-
-      // Gambe
-      const legGeo = new THREE.BoxGeometry(0.8, 2.5, 0.8);
-      const leftLeg = new THREE.Mesh(legGeo, bodyMat);
-      leftLeg.position.set(-0.6, 1.25, 0);
-      leftLeg.castShadow = true;
-      playerGroup.add(leftLeg);
-
-      const rightLeg = new THREE.Mesh(legGeo, bodyMat);
-      rightLeg.position.set(0.6, 1.25, 0);
-      rightLeg.castShadow = true;
-      playerGroup.add(rightLeg);
-
-      scene.add(playerGroup);
-
-      // --- STATO DEL GIOCO ---
-      const EVOLUTIONS = [
-        { name: 'Cane Randagio', speed: 0.9, color: 0xd97706 },
-        { name: 'Lupo Guerriero', speed: 1.2, color: 0x475569 },
-        { name: 'Pantera d\'Assalto', speed: 1.5, color: 0x1e1b4b },
-        { name: 'Leone Titano', speed: 1.8, color: 0xeab308 }
-      ];
-      let playerState = { evoIdx: 0, coins: 150 };
-
-      // Controlli Input
-      let moveInput = { x: 0, y: 0 };
-      let playerAngle = 0;
-      let animTime = 0;
-      const keys = {};
-
-      window.addEventListener('keydown', e => keys[e.code] = true);
-      window.addEventListener('keyup', e => keys[e.code] = false);
-
-      const joystickZone = document.getElementById('joystick-zone');
-      const joystickStick = document.getElementById('joystick-stick');
-      let touchId = null;
-
-      joystickZone.addEventListener('touchstart', e => {
-        const t = e.changedTouches[0];
-        touchId = t.identifier;
-        updateJoystick(t);
-      });
-      window.addEventListener('touchmove', e => {
-        for (let t of e.changedTouches) {
-          if (t.identifier === touchId) updateJoystick(t);
-        }
-      });
-      window.addEventListener('touchend', e => {
-        for (let t of e.changedTouches) {
-          if (t.identifier === touchId) {
-            touchId = null;
-            moveInput = { x: 0, y: 0 };
-            joystickStick.style.top = '35px';
-            joystickStick.style.left = '35px';
-          }
-        }
-      });
-
-      function updateJoystick(t) {
-        const rect = joystickZone.getBoundingClientRect();
-        const dx = t.clientX - (rect.left + rect.width / 2);
-        const dy = t.clientY - (rect.top + rect.height / 2);
-        const dist = Math.min(45, Math.hypot(dx, dy));
-        const angle = Math.atan2(dy, dx);
-        joystickStick.style.left = `${35 + Math.cos(angle) * dist}px`;
-        joystickStick.style.top = `${35 + Math.sin(angle) * dist}px`;
-        moveInput.x = (Math.cos(angle) * dist) / 45;
-        moveInput.y = (Math.sin(angle) * dist) / 45;
-      }
-
-      window.actionAttack = function() {
-        playerState.coins += 25;
-        updateUI();
-      };
-      window.actionBuild = function() {
-        if (playerState.coins < 50) return;
-        playerState.coins -= 50;
-        const tower = new THREE.Mesh(new THREE.CylinderGeometry(3, 4, 10, 8), new THREE.MeshStandardMaterial({ color: 0x16a34a }));
-        tower.position.copy(playerGroup.position);
-        tower.position.y = 5;
-        tower.castShadow = true;
-        scene.add(tower);
-        updateUI();
-      };
-      window.actionEvolve = function() {
-        if (playerState.evoIdx >= EVOLUTIONS.length - 1) return;
-        const cost = (playerState.evoIdx + 1) * 100;
-        if (playerState.coins < cost) return;
-        playerState.coins -= cost;
-        playerState.evoIdx++;
-        bodyMat.color.setHex(EVOLUTIONS[playerState.evoIdx].color);
-        playerGroup.scale.multiplyScalar(1.1);
-        updateUI();
-      };
-      function updateUI() {
-        document.getElementById('player-coins').innerText = playerState.coins;
-        document.getElementById('player-evo').innerText = EVOLUTIONS[playerState.evoIdx].name;
-      }
-
-      // --- LOOP DI RENDERING ---
-      function animate() {
-        requestAnimationFrame(animate);
-
-        let kX = 0, kY = 0;
-        if (keys['KeyW'] || keys['ArrowUp']) kY -= 1;
-        if (keys['KeyS'] || keys['ArrowDown']) kY += 1;
-        if (keys['KeyA'] || keys['ArrowLeft']) kX -= 1;
-        if (keys['KeyD'] || keys['ArrowRight']) kX += 1;
-
-        const mx = moveInput.x || kX;
-        const my = moveInput.y || kY;
-        const isMoving = Math.hypot(mx, my) > 0.1;
-
-        if (isMoving) {
-          const speed = EVOLUTIONS[playerState.evoIdx].speed;
-          playerGroup.position.x += mx * speed;
-          playerGroup.position.z += my * speed;
-          playerAngle = Math.atan2(mx, my);
-          playerGroup.rotation.y = playerAngle;
-
-          animTime += 0.15;
-          leftLeg.rotation.x = Math.sin(animTime) * 0.5;
-          rightLeg.rotation.x = -Math.sin(animTime) * 0.5;
-          leftArm.rotation.x = -Math.sin(animTime) * 0.5;
-          rightArm.rotation.x = Math.sin(animTime) * 0.5;
-        } else {
-          leftLeg.rotation.x = 0;
-          rightLeg.rotation.x = 0;
-          leftArm.rotation.x = 0;
-          rightArm.rotation.x = 0;
-        }
-
-        // Telecamera GTA in terza persona
-        const camDist = 22;
-        const camHeight = 11;
-        camera.position.x = playerGroup.position.x - Math.sin(playerAngle) * camDist;
-        camera.position.z = playerGroup.position.z - Math.cos(playerAngle) * camDist;
-        camera.position.y = playerGroup.position.y + camHeight;
-        camera.lookAt(playerGroup.position.x, playerGroup.position.y + 3.5, playerGroup.position.z);
-
-        // Quartiere
-        let activeDistrict = 'Periferia Canicattini';
-        DISTRICTS.forEach(d => {
-          const dist = Math.hypot(playerGroup.position.x - d.x, playerGroup.position.z - d.z);
-          if (dist < d.radius) activeDistrict = d.name;
-        });
-        document.getElementById('current-district').innerText = activeDistrict;
-
-        renderer.render(scene, camera);
-      }
-
-      window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-      });
-
-      animate();
-    });
-  </script>
-</body>
-</html>
+      const bTex1 =
