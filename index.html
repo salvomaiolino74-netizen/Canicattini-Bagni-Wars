@@ -3,18 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Canicattini Bagni: Pet Wars 3D Open World</title>
+  <title>Canicattini Bagni: Pet Wars Open World</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; touch-action: none; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       background-color: #050811;
       color: #fff;
       overflow: hidden;
       width: 100vw;
       height: 100vh;
     }
-    #game-canvas { width: 100%; height: 100%; display: block; }
+    #game-canvas { width: 100%; height: 100%; display: block; background: #0b1329; }
     
     /* UI Overlay */
     .ui-layer {
@@ -24,7 +24,7 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      padding: 16px;
+      padding: 12px;
     }
     .interactive { pointer-events: auto; }
 
@@ -32,25 +32,27 @@
     .top-bar {
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
+      align-items: center;
+      gap: 8px;
     }
     .hud-card {
-      background: rgba(15, 23, 42, 0.85);
-      backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      padding: 10px 16px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 8px 12px;
       border-radius: 12px;
       display: flex;
-      gap: 16px;
+      gap: 12px;
       align-items: center;
+      font-size: 0.85rem;
     }
-    .stat-val { font-weight: 800; color: #f59e0b; font-size: 1.1rem; }
+    .stat-val { font-weight: 800; color: #f59e0b; }
     .district-badge {
-      background: #2563eb;
+      background: #84cc16;
+      color: #000;
       padding: 4px 10px;
       border-radius: 20px;
       font-size: 0.8rem;
-      font-weight: 700;
+      font-weight: 800;
       text-transform: uppercase;
     }
 
@@ -60,35 +62,35 @@
       justify-content: space-between;
       align-items: flex-end;
       width: 100%;
+      padding-bottom: 8px;
     }
     
     .touch-joystick {
-      width: 120px;
-      height: 120px;
+      width: 110px;
+      height: 110px;
       background: rgba(255, 255, 255, 0.1);
       border: 2px solid rgba(255, 255, 255, 0.3);
       border-radius: 50%;
       position: relative;
-      touch-action: none;
     }
     .joystick-stick {
-      width: 50px;
-      height: 50px;
+      width: 44px;
+      height: 44px;
       background: #f59e0b;
       border-radius: 50%;
       position: absolute;
-      top: 35px; left: 35px;
-      box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+      top: 33px; left: 33px;
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.6);
     }
 
     .action-buttons {
       display: grid;
-      grid-template-columns: repeat(2, 65px);
+      grid-template-columns: repeat(2, 60px);
       gap: 10px;
     }
     .btn-game {
-      width: 65px;
-      height: 65px;
+      width: 60px;
+      height: 60px;
       border-radius: 50%;
       border: none;
       background: rgba(30, 41, 59, 0.9);
@@ -98,7 +100,7 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
       border: 1px solid rgba(255, 255, 255, 0.2);
     }
     .btn-game:active { transform: scale(0.92); }
@@ -106,24 +108,16 @@
     .btn-build { background: #16a34a; }
     .btn-evolve { background: #8b5cf6; }
 
-    /* Minimap & Crosshair */
-    .crosshair {
-      position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      width: 10px; height: 10px;
-      border: 2px solid rgba(255, 255, 255, 0.6);
-      border-radius: 50%;
-    }
     .instruction {
       position: absolute;
-      top: 70px;
+      top: 60px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(0,0,0,0.6);
+      background: rgba(0,0,0,0.7);
       padding: 6px 14px;
       border-radius: 20px;
-      font-size: 0.8rem;
+      font-size: 0.75rem;
+      white-space: nowrap;
     }
   </style>
 </head>
@@ -131,3 +125,330 @@
 
   <canvas id="game-canvas"></canvas>
 
+  <div class="ui-layer">
+    <div class="top-bar">
+      <div class="hud-card interactive">
+        <div>Evoluzione: <span id="player-evo" class="stat-val">Cane Randagio</span></div>
+        <div>🪙 <span id="player-coins" class="stat-val">150</span></div>
+      </div>
+      <div class="hud-card interactive">
+        <div id="current-district" class="district-badge">Matrice</div>
+      </div>
+    </div>
+
+    <div class="instruction">Usa il Joystick o la Tastiera (WASD/Frecce) per muoverti</div>
+
+    <div class="controls-panel">
+      <!-- Touch Joystick per Mobile -->
+      <div class="touch-joystick interactive" id="joystick-zone">
+        <div class="joystick-stick" id="joystick-stick"></div>
+      </div>
+
+      <!-- Pulsanti d'Azione -->
+      <div class="action-buttons interactive">
+        <button class="btn-game btn-attack" onclick="handleAttack()">⚔️</button>
+        <button class="btn-game btn-build" onclick="handleBuild()">🏗️</button>
+        <button class="btn-game btn-evolve" onclick="handleEvolve()">✨</button>
+        <button class="btn-game" style="background:#3b82f6" onclick="handleAttack()">⚡</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('game-canvas');
+    const ctx = canvas.getContext('2d');
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // --- DATI QUARTIERI DI CANICATTINI BAGNI ---
+    const DISTRICTS = [
+      { id: 'matrice', name: 'Matrice', color: '#ef4444', x: 0, y: -250, radius: 140 },
+      { id: 'sangiovanni', name: 'San Giovanni', color: '#f59e0b', x: -260, y: -100, radius: 130 },
+      { id: 'badune', name: 'Badune', color: '#3b82f6', x: 260, y: -80, radius: 130 },
+      { id: 'pizzumulu', name: 'Pizzumulu', color: '#10b981', x: 0, y: 50, radius: 120 },
+      { id: 'balatazza', name: 'Balatazza', color: '#8b5cf6', x: 280, y: 180, radius: 120 },
+      { id: 'priolo', name: 'Priolo', color: '#ec4899', x: -280, y: 160, radius: 120 },
+      { id: 'vigna', name: 'Vigna', color: '#06b6d4', x: -120, y: 320, radius: 130 },
+      { id: 'santuzzo', name: 'Santuzzo', color: '#84cc16', x: 140, y: 320, radius: 130 }
+    ];
+
+    // Generazione Edifici Procedurali per Quartiere
+    const BUILDINGS = [];
+    DISTRICTS.forEach(d => {
+      for (let i = 0; i < 6; i++) {
+        const angle = (i / 6) * Math.PI * 2;
+        const dist = 40 + Math.random() * (d.radius - 70);
+        BUILDINGS.push({
+          x: d.x + Math.cos(angle) * dist,
+          y: d.y + Math.sin(angle) * dist,
+          w: 40 + Math.random() * 20,
+          h: 40 + Math.random() * 20,
+          color: '#1e293b'
+        });
+      }
+    });
+
+    // Avamposti Costruiti dal Giocatore
+    const OUTPOSTS = [];
+    const EFFECTS = [];
+
+    // --- STATO GIOCATORE ---
+    const EVOLUTIONS = [
+      { name: 'Cane Randagio', icon: '🐕', speed: 4, power: 10, color: '#d97706' },
+      { name: 'Lupo Guerriero', icon: '🐺', speed: 5, power: 30, color: '#475569' },
+      { name: 'Pantera d\'Assalto', icon: '🐆', speed: 6.5, power: 75, color: '#1e1b4b' },
+      { name: 'Leone Titano', icon: '🦁', speed: 8, power: 180, color: '#eab308' }
+    ];
+
+    let player = {
+      x: 0,
+      y: 0,
+      evoIndex: 0,
+      coins: 150,
+      angle: 0
+    };
+
+    let input = { x: 0, y: 0 };
+    const keys = {};
+
+    window.addEventListener('keydown', e => keys[e.code] = true);
+    window.addEventListener('keyup', e => keys[e.code] = false);
+
+    // Controlli Touch (Joystick)
+    const joystickZone = document.getElementById('joystick-zone');
+    const joystickStick = document.getElementById('joystick-stick');
+    let touchId = null;
+
+    joystickZone.addEventListener('touchstart', e => {
+      e.preventDefault();
+      const touch = e.changedTouches[0];
+      touchId = touch.identifier;
+      updateJoystick(touch);
+    });
+
+    window.addEventListener('touchmove', e => {
+      for (let touch of e.changedTouches) {
+        if (touch.identifier === touchId) {
+          updateJoystick(touch);
+        }
+      }
+    });
+
+    window.addEventListener('touchend', e => {
+      for (let touch of e.changedTouches) {
+        if (touch.identifier === touchId) {
+          touchId = null;
+          input = { x: 0, y: 0 };
+          joystickStick.style.top = '33px';
+          joystickStick.style.left = '33px';
+        }
+      }
+    });
+
+    function updateJoystick(touch) {
+      const rect = joystickZone.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      const dx = touch.clientX - centerX;
+      const dy = touch.clientY - centerY;
+      const dist = Math.min(35, Math.hypot(dx, dy));
+      const angle = Math.atan2(dy, dx);
+
+      joystickStick.style.left = `${33 + Math.cos(angle) * dist}px`;
+      joystickStick.style.top = `${33 + Math.sin(angle) * dist}px`;
+
+      input.x = (Math.cos(angle) * dist) / 35;
+      input.y = (Math.sin(angle) * dist) / 35;
+    }
+
+    // --- AZIONI GIOCATORE ---
+    function handleAttack() {
+      EFFECTS.push({
+        x: player.x,
+        y: player.y,
+        radius: 10,
+        maxRadius: 70,
+        color: '#dc2626',
+        alpha: 1
+      });
+      player.coins += 15;
+      updateUI();
+    }
+
+    function handleBuild() {
+      if (player.coins < 40) return;
+      player.coins -= 40;
+      OUTPOSTS.push({ x: player.x, y: player.y, color: '#16a34a' });
+      updateUI();
+    }
+
+    function handleEvolve() {
+      if (player.evoIndex >= EVOLUTIONS.length - 1) return;
+      const cost = (player.evoIndex + 1) * 100;
+      if (player.coins < cost) return;
+      player.coins -= cost;
+      player.evoIndex++;
+      EFFECTS.push({
+        x: player.x,
+        y: player.y,
+        radius: 10,
+        maxRadius: 100,
+        color: '#8b5cf6',
+        alpha: 1
+      });
+      updateUI();
+    }
+
+    function updateUI() {
+      document.getElementById('player-coins').innerText = player.coins;
+      document.getElementById('player-evo').innerText = EVOLUTIONS[player.evoIndex].name;
+    }
+
+    // --- GAME LOOP ---
+    function update() {
+      // Input Tastiera
+      let kX = 0, kY = 0;
+      if (keys['KeyW'] || keys['ArrowUp']) kY -= 1;
+      if (keys['KeyS'] || keys['ArrowDown']) kY += 1;
+      if (keys['KeyA'] || keys['ArrowLeft']) kX -= 1;
+      if (keys['KeyD'] || keys['ArrowRight']) kX += 1;
+
+      const moveX = input.x || kX;
+      const moveY = input.y || kY;
+
+      const currentEvo = EVOLUTIONS[player.evoIndex];
+
+      if (Math.hypot(moveX, moveY) > 0.1) {
+        player.x += moveX * currentEvo.speed;
+        player.y += moveY * currentEvo.speed;
+        player.angle = Math.atan2(moveY, moveX);
+      }
+
+      // Controllo Quartiere Corrente
+      let currentDistName = 'Periferia';
+      let currentDistColor = '#84cc16';
+      DISTRICTS.forEach(d => {
+        const dist = Math.hypot(player.x - d.x, player.y - d.y);
+        if (dist < d.radius) {
+          currentDistName = d.name;
+          currentDistColor = d.color;
+        }
+      });
+      const badge = document.getElementById('current-district');
+      badge.innerText = currentDistName;
+      badge.style.background = currentDistColor;
+    }
+
+    function render() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.save();
+      // Telecamera centrata sul giocatore
+      ctx.translate(canvas.width / 2 - player.x, canvas.height / 2 - player.y);
+
+      // 1. Griglia di Sfondo / Strade
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 1;
+      const gridSize = 80;
+      for (let x = -1000; x <= 1000; x += gridSize) {
+        ctx.beginPath(); ctx.moveTo(x, -1000); ctx.lineTo(x, 1000); ctx.stroke();
+      }
+      for (let y = -1000; y <= 1000; y += gridSize) {
+        ctx.beginPath(); ctx.moveTo(-1000, y); ctx.lineTo(1000, y); ctx.stroke();
+      }
+
+      // 2. Disegna Quartieri (Zone Circolari con Confini)
+      DISTRICTS.forEach(d => {
+        ctx.beginPath();
+        ctx.arc(d.x, d.y, d.radius, 0, Math.PI * 2);
+        ctx.fillStyle = d.color + '1a';
+        ctx.fill();
+        ctx.strokeStyle = d.color;
+        ctx.lineWidth = 3;
+        ctx.setLineDash([8, 8]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Nome Quartiere al centro
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 16px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(d.name, d.x, d.y);
+      });
+
+      // 3. Edifici
+      BUILDINGS.forEach(b => {
+        ctx.fillStyle = b.color;
+        ctx.fillRect(b.x - b.w / 2, b.y - b.h / 2, b.w, b.h);
+        ctx.strokeStyle = '#334155';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(b.x - b.w / 2, b.y - b.h / 2, b.w, b.h);
+      });
+
+      // 4. Avamposti Costruiti
+      OUTPOSTS.forEach(o => {
+        ctx.fillStyle = o.color;
+        ctx.beginPath();
+        ctx.arc(o.x, o.y, 14, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      });
+
+      // 5. Effetti Visivi
+      for (let i = EFFECTS.length - 1; i >= 0; i--) {
+        const e = EFFECTS[i];
+        e.radius += 3;
+        e.alpha -= 0.04;
+        if (e.alpha <= 0) {
+          EFFECTS.splice(i, 1);
+          continue;
+        }
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2);
+        ctx.strokeStyle = e.color;
+        ctx.globalAlpha = e.alpha;
+        ctx.lineWidth = 4;
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+      }
+
+      // 6. Giocatore (Avatar Animale)
+      const currentEvo = EVOLUTIONS[player.evoIndex];
+      ctx.save();
+      ctx.translate(player.x, player.y);
+      ctx.rotate(player.angle);
+
+      // Cerchio Aura
+      ctx.beginPath();
+      ctx.arc(0, 0, 22, 0, Math.PI * 2);
+      ctx.fillStyle = currentEvo.color + '44';
+      ctx.fill();
+
+      // Icona Animale
+      ctx.font = '26px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(currentEvo.icon, 0, 0);
+
+      ctx.restore();
+
+      ctx.restore();
+    }
+
+    function loop() {
+      update();
+      render();
+      requestAnimationFrame(loop);
+    }
+
+    loop();
+  </script>
+</body>
+</html>
