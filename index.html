@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Canicattini Bagni 3D - GTA Style HD + NPC AI</title>
+  <title>Canicattini Bagni 3D - GTA Style HD + Pugni & Combattimento</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; touch-action: none; }
     body {
@@ -94,7 +94,7 @@
       box-shadow: 0 4px 12px rgba(0,0,0,0.6);
     }
     .btn-action:active { transform: scale(0.9); }
-    .btn-atk { background: #dc2626; }
+    .btn-punch { background: #dc2626; font-size: 1.4rem; }
     .btn-bld { background: #16a34a; }
     .btn-jmp { background: #eab308; }
   </style>
@@ -114,8 +114,8 @@
         <div class="joystick-stick" id="joystick-stick"></div>
       </div>
       <div class="action-grid interactive">
+        <button class="btn-action btn-punch" onclick="actionPunch()">🥊</button>
         <button class="btn-action btn-jmp" onclick="actionJump()">🦘</button>
-        <button class="btn-action btn-atk" onclick="actionAttack()">⚔️</button>
         <button class="btn-action btn-bld" onclick="actionBuild()">🏗️</button>
         <button class="btn-action" style="background:#8b5cf6;" onclick="actionEvolve()">✨</button>
         <button class="btn-action" style="background:#2563eb;" onclick="actionAttack()">⚡</button>
@@ -261,27 +261,23 @@
 
       scene.add(playerGroup);
 
-      // --- COSTRUTTORE NPC UMANI E ANIMALI ---
+      // --- NPC ---
       function createHumanNPCMesh(shirtColor, pantsColor) {
         const group = new THREE.Group();
         const skinMat = new THREE.MeshStandardMaterial({ color: 0xffdbac, roughness: 0.6 });
         const shirtMat = new THREE.MeshStandardMaterial({ color: shirtColor, roughness: 0.5 });
         const pantsMat = new THREE.MeshStandardMaterial({ color: pantsColor, roughness: 0.5 });
 
-        // Torso Umano
         const t = new THREE.Mesh(new THREE.BoxGeometry(1.8, 2.8, 1), shirtMat);
         t.position.y = 3; t.castShadow = true; group.add(t);
 
-        // Testa Umana
         const h = new THREE.Mesh(new THREE.SphereGeometry(0.8, 12, 12), skinMat);
         h.position.y = 5; h.castShadow = true; group.add(h);
 
-        // Braccia Umane
         const aG = new THREE.BoxGeometry(0.6, 2.4, 0.6);
         const lA = new THREE.Mesh(aG, skinMat); lA.position.set(-1.3, 3, 0); lA.castShadow = true; group.add(lA);
         const rA = new THREE.Mesh(aG, skinMat); rA.position.set(1.3, 3, 0); rA.castShadow = true; group.add(rA);
 
-        // Gambe Umane
         const lG = new THREE.BoxGeometry(0.7, 2.4, 0.7);
         const lL = new THREE.Mesh(lG, pantsMat); lL.position.set(-0.5, 1.2, 0); lL.castShadow = true; group.add(lL);
         const rL = new THREE.Mesh(lG, pantsMat); rL.position.set(0.5, 1.2, 0); rL.castShadow = true; group.add(rL);
@@ -293,15 +289,12 @@
         const group = new THREE.Group();
         const furMat = new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.6 });
 
-        // Corpo Quadrupede
         const body = new THREE.Mesh(new THREE.BoxGeometry(1.8, 1.8, 3.2), furMat);
         body.position.y = 1.6; body.castShadow = true; group.add(body);
 
-        // Testa
         const h = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.4, 1.4), furMat);
         h.position.set(0, 2.4, -1.5); h.castShadow = true; group.add(h);
 
-        // 4 Zampe
         const legGeo = new THREE.BoxGeometry(0.6, 1.4, 0.6);
         const lL = new THREE.Mesh(legGeo, furMat); lL.position.set(-0.7, 0.7, 1); lL.castShadow = true; group.add(lL);
         const rL = new THREE.Mesh(legGeo, furMat); rL.position.set(0.7, 0.7, 1); rL.castShadow = true; group.add(rL);
@@ -311,12 +304,10 @@
         return { mesh: group, leftLeg: lL, rightLeg: rL, leftArm: lF, rightArm: rF };
       }
 
-      // --- SISTEMA IA NPC (INTELLIGENZA ARTIFICIALE) ---
       const npcs = [];
       const humanColors = [0x2563eb, 0xdc2626, 0x16a34a, 0x9333ea, 0x0891b2];
       const animalColors = [0x475569, 0x1e1b4b, 0x854d0e, 0x334155];
 
-      // Spawn 6 NPC Umani
       for (let i = 0; i < 6; i++) {
         const data = createHumanNPCMesh(humanColors[i % humanColors.length], 0x1f2937);
         const rx = (Math.random() - 0.5) * 400;
@@ -333,11 +324,11 @@
           speed: 0.6 + Math.random() * 0.4,
           velocityY: 0, isGrounded: true,
           animTime: Math.random() * 10,
-          decisionTimer: 0
+          decisionTimer: 0,
+          hitTimer: 0
         });
       }
 
-      // Spawn 6 NPC Animali
       for (let i = 0; i < 6; i++) {
         const data = createAnimalNPCMesh(animalColors[i % animalColors.length]);
         const rx = (Math.random() - 0.5) * 400;
@@ -354,26 +345,34 @@
           speed: 0.7 + Math.random() * 0.5,
           velocityY: 0, isGrounded: true,
           animTime: Math.random() * 10,
-          decisionTimer: 0
+          decisionTimer: 0,
+          hitTimer: 0
         });
       }
 
       function updateNPC_AI(npc) {
+        // Gestione Animazione Impatto / Colpo Ricevuto
+        if (npc.hitTimer > 0) {
+          npc.hitTimer--;
+          npc.mesh.rotation.z = Math.sin(npc.hitTimer * 0.5) * 0.4;
+          npc.mesh.position.y = Math.abs(Math.sin(npc.hitTimer * 0.3)) * 0.8;
+          return;
+        } else {
+          npc.mesh.rotation.z = 0;
+        }
+
         npc.decisionTimer--;
 
-        // L'IA sceglie un nuovo obiettivo o un'azione (Camminare / Saltare / Costruire)
         if (npc.decisionTimer <= 0) {
           npc.decisionTimer = 100 + Math.floor(Math.random() * 150);
           npc.targetX = npc.mesh.position.x + (Math.random() - 0.5) * 120;
           npc.targetZ = npc.mesh.position.z + (Math.random() - 0.5) * 120;
 
-          // IA Decisione: Salto Casuale o d'Emergenza
           if (Math.random() < 0.25 && npc.isGrounded) {
             npc.velocityY = 0.42;
             npc.isGrounded = false;
           }
 
-          // IA Decisione: Costruzione Struttura
           if (Math.random() < 0.15) {
             const tower = new THREE.Mesh(
               new THREE.CylinderGeometry(2, 3, 8, 8),
@@ -386,7 +385,6 @@
           }
         }
 
-        // Calcolo traiettoria e movimento
         const dx = npc.targetX - npc.mesh.position.x;
         const dz = npc.targetZ - npc.mesh.position.z;
         const dist = Math.hypot(dx, dz);
@@ -398,7 +396,6 @@
           const nextX = npc.mesh.position.x + mx;
           const nextZ = npc.mesh.position.z + mz;
 
-          // Collisione solida schivata palazzi dall'IA
           if (!checkCollision(nextX, npc.mesh.position.z)) {
             npc.mesh.position.x = nextX;
           } else {
@@ -413,7 +410,6 @@
 
           npc.mesh.rotation.y = Math.atan2(mx, mz);
 
-          // Animazione camminata
           if (npc.isGrounded) {
             npc.animTime += 0.15;
             npc.leftLeg.rotation.x = Math.sin(npc.animTime) * 0.5;
@@ -423,7 +419,6 @@
           }
         }
 
-        // Fisica Gravità NPC
         if (!npc.isGrounded || npc.velocityY !== 0) {
           npc.mesh.position.y += npc.velocityY;
           npc.velocityY -= 0.018;
@@ -436,9 +431,10 @@
         }
       }
 
-      // --- FISICA GIOCATORE ---
+      // --- FISICA E COMBATTIMENTO GIOCATORE ---
       let velocityY = 0;
       let isGrounded = true;
+      let punchTimer = 0;
       const gravity = -0.018;
       const jumpPower = 0.48;
 
@@ -458,6 +454,7 @@
       window.addEventListener('keydown', e => {
         keys[e.code] = true;
         if (e.code === 'Space') actionJump();
+        if (e.code === 'KeyF') actionPunch();
       });
       window.addEventListener('keyup', e => keys[e.code] = false);
 
@@ -498,6 +495,25 @@
         moveInput.y = (Math.sin(angle) * dist) / 45;
       }
 
+      window.actionPunch = function() {
+        if (punchTimer === 0) {
+          punchTimer = 18; // Durata animazione del pugno
+
+          // Controllo NPC nel raggio d'attacco
+          npcs.forEach(npc => {
+            const dist = Math.hypot(
+              playerGroup.position.x - npc.mesh.position.x,
+              playerGroup.position.z - npc.mesh.position.z
+            );
+            if (dist < 6) {
+              npc.hitTimer = 25; // Attiva l'animazione di sbalzo dell'NPC
+              playerState.coins += 15;
+              updateUI();
+            }
+          });
+        }
+      };
+
       window.actionJump = function() {
         if (isGrounded) {
           velocityY = jumpPower;
@@ -506,8 +522,7 @@
       };
 
       window.actionAttack = function() {
-        playerState.coins += 25;
-        updateUI();
+        actionPunch();
       };
 
       window.actionBuild = function() {
@@ -573,19 +588,29 @@
           playerAngle = Math.atan2(mx, my);
           playerGroup.rotation.y = playerAngle;
 
-          if (isGrounded) {
+          if (isGrounded && punchTimer === 0) {
             animTime += 0.15;
             leftLeg.rotation.x = Math.sin(animTime) * 0.5;
             rightLeg.rotation.x = -Math.sin(animTime) * 0.5;
             leftArm.rotation.x = -Math.sin(animTime) * 0.5;
             rightArm.rotation.x = Math.sin(animTime) * 0.5;
           }
-        } else if (isGrounded) {
+        } else if (isGrounded && punchTimer === 0) {
           leftLeg.rotation.x = 0; rightLeg.rotation.x = 0;
           leftArm.rotation.x = 0; rightArm.rotation.x = 0;
         }
 
-        // Fisica Giocatore
+        // Animazione Pugno del Giocatore
+        if (punchTimer > 0) {
+          punchTimer--;
+          const punchProgress = Math.sin((18 - punchTimer) / 18 * Math.PI);
+          rightArm.rotation.x = -Math.PI / 2 * punchProgress;
+          rightArm.position.z = punchProgress * 1.2;
+        } else {
+          rightArm.position.z = 0;
+        }
+
+        // Fisica Gravità
         if (!isGrounded || velocityY !== 0) {
           playerGroup.position.y += velocityY;
           velocityY += gravity;
@@ -597,10 +622,10 @@
           }
         }
 
-        // Aggiornamento IA di tutti gli NPC (Umani e Animali)
+        // Aggiornamento IA NPC
         npcs.forEach(npc => updateNPC_AI(npc));
 
-        // Telecamera GTA terza persona
+        // Telecamera Terza Persona
         const camDist = 22;
         const camHeight = 11;
         camera.position.x = playerGroup.position.x - Math.sin(playerAngle) * camDist;
