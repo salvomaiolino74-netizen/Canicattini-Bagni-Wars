@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Canicattini Bagni 3D - Ultimate Edition</title>
+  <title>Canicattini Bagni 3D - Ultimate Open World</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; touch-action: none; }
     html, body {
@@ -71,7 +71,7 @@
     }
     #pause-menu.visible { opacity: 1; pointer-events: auto; }
 
-    /* --- NEGOZIO PERSONALIZZAZIONE --- */
+    /* --- NEGOZIO PERSONALIZZAZIONE (SHOP) --- */
     #shop-menu {
       position: absolute;
       top: 0; left: 0; width: 100vw; height: 100vh;
@@ -89,35 +89,43 @@
     }
     #shop-menu.visible { opacity: 1; pointer-events: auto; }
     .shop-container {
-      background: rgba(15, 23, 42, 0.95);
-      border: 2px solid rgba(245, 158, 11, 0.4);
-      border-radius: 20px;
+      background: rgba(30, 41, 59, 0.9);
+      border: 2px solid rgba(255,255,255,0.2);
       padding: 24px;
-      width: 85%;
-      max-width: 360px;
+      border-radius: 20px;
+      width: 90%; max-width: 400px;
       display: flex;
       flex-direction: column;
       gap: 15px;
-      align-items: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
     }
     .shop-item {
-      width: 100%;
-      background: #1e293b;
-      border: 1px solid #334155;
-      padding: 12px;
-      border-radius: 12px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      background: rgba(15, 23, 42, 0.8);
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.1);
     }
     .btn-buy {
-      background: #f59e0b;
-      color: #000;
-      font-weight: bold;
+      background: #16a34a;
+      color: white;
       border: none;
-      padding: 6px 14px;
-      border-radius: 8px;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: bold;
       cursor: pointer;
+    }
+    .btn-close-shop {
+      background: #dc2626;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 20px;
+      font-weight: bold;
+      cursor: pointer;
+      text-align: center;
     }
 
     /* --- BARRA RESISTENZA --- */
@@ -217,14 +225,14 @@
       top: 32px; left: 32px;
       box-shadow: 0 0 12px rgba(245, 158, 11, 0.8);
     }
-    .action-grid { display: flex; gap: 10px; align-items: center; }
+    .action-grid { display: flex; gap: 8px; align-items: center; }
     .btn-action {
-      width: 50px; height: 50px;
+      width: 48px; height: 48px;
       border-radius: 50%;
       border: 1px solid rgba(255,255,255,0.4);
       background: rgba(15, 23, 42, 0.85);
       color: white;
-      font-size: 1.1rem;
+      font-size: 1rem;
       display: flex; justify-content: center; align-items: center;
       box-shadow: 0 4px 12px rgba(0,0,0,0.6);
     }
@@ -235,28 +243,32 @@
 
   <div id="main-menu">
     <div class="menu-title">PET WARS 3D<br><span style="font-size:1.3rem; color:#fff;">Canicattini Bagni</span></div>
-    <div class="menu-subtitle">Shop & 360° Cam Edition</div>
+    <div class="menu-subtitle">Open World Edition: Shop, Veicoli & Easter Eggs</div>
     <button class="btn-play" id="btn-play-trigger">GIOCA</button>
   </div>
 
   <div id="pause-menu" class="interactive">
     <h2 style="color:#fff; margin-bottom:15px; font-size:2rem;">PARTITA IN PAUSA</h2>
-    <button class="btn-play" onclick="resumeGame()" style="margin-bottom:10px;">RIPRENDI</button>
-    <button class="btn-play" onclick="openShop()" style="background:linear-gradient(135deg, #3b82f6, #1d4ed8); color:#fff;">🛒 NEGOZIO</button>
+    <button class="btn-play" onclick="resumeGame()">RIPRENDI</button>
   </div>
 
+  <!-- NEGOZIO SKIN -->
   <div id="shop-menu" class="interactive">
     <div class="shop-container">
-      <h2 style="color:#f59e0b; font-size:1.5rem;">NEGOZIO SKIN</h2>
+      <h2 style="color:#f59e0b; text-align:center;">NEGOZIO ACCESSORI</h2>
       <div class="shop-item">
-        <div>🐶 <b>Collare Borchiato</b><br><small style="color:#94a3b8;">Prezzo: 50 🪙</small></div>
-        <button class="btn-buy" onclick="buyItem('collar', 50)">ACQUISTA</button>
+        <span>🕶️ Occhiali da Gangster</span>
+        <button class="btn-buy" onclick="buyAccessory('glasses', 50)">50 🪙</button>
       </div>
       <div class="shop-item">
-        <div>🕶️ <b>Occhiali Gangster</b><br><small style="color:#94a3b8;">Prezzo: 100 🪙</small></div>
-        <button class="btn-buy" onclick="buyItem('glasses', 100)">ACQUISTA</button>
+        <span>🎩 Cappello Elegante</span>
+        <button class="btn-buy" onclick="buyAccessory('hat', 100)">100 🪙</button>
       </div>
-      <button class="btn-play" onclick="closeShop()" style="width:100%; padding:10px; font-size:1rem;">CHIUDI</button>
+      <div class="shop-item">
+        <span>⚡ Pelliccia Dorata</span>
+        <button class="btn-buy" onclick="buyAccessory('gold', 200)">200 🪙</button>
+      </div>
+      <button class="btn-close-shop" onclick="closeShop()">CHIUDI</button>
     </div>
   </div>
 
@@ -289,8 +301,8 @@
         <button class="btn-action" style="background:#3b82f6;" ontouchstart="startRunning()" ontouchend="stopRunning()" onmousedown="startRunning()" onmouseup="stopRunning()">🏃‍♂️</button>
         <button class="btn-action" style="background:#dc2626;" onclick="actionPunch()">🥊</button>
         <button class="btn-action" style="background:#eab308;" onclick="actionJump()">🦘</button>
-        <button class="btn-action" style="background:#16a34a;" onclick="openShop()">🛒</button>
-        <button class="btn-action" style="background:#8b5cf6;" onclick="actionEvolve()">✨</button>
+        <button class="btn-action" style="background:#16a34a;" onclick="toggleVehicleDrive()">🚗</button>
+        <button class="btn-action" style="background:#8b5cf6;" onclick="openShop()">🛍️</button>
       </div>
     </div>
   </div>
@@ -300,6 +312,8 @@
     let gameStarted = false;
     let isPaused = false;
     let audioCtx = null;
+    let playerState = { evoIdx: 0, coins: 150, accessories: [] };
+    let drivingVehicle = null;
 
     function initAudio() {
       if (!audioCtx) {
@@ -326,10 +340,6 @@
           osc.type = 'sine'; osc.frequency.setValueAtTime(600, now); osc.frequency.setValueAtTime(900, now + 0.08);
           gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
           osc.start(now); osc.stop(now + 0.2);
-        } else if (type === 'hit') {
-          osc.type = 'sawtooth'; osc.frequency.setValueAtTime(100, now); osc.frequency.linearRampToValueAtTime(30, now + 0.4);
-          gain.gain.setValueAtTime(0.4, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.4);
-          osc.start(now); osc.stop(now + 0.4);
         }
       } catch(e) {}
     }
@@ -337,38 +347,25 @@
     let isRunningPressed = false;
     let stamina = 100;
     let isExhausted = false;
-    const maxStaminaTime = 7.0; 
-    const recoverTime = 7.0; 
 
-    let isHitByVehicle = false;
-    let hitAnimTimer = 0;
-
-    function startRunning() { if (!isExhausted && !isHitByVehicle) isRunningPressed = true; }
+    function startRunning() { if (!isExhausted) isRunningPressed = true; }
     function stopRunning() { isRunningPressed = false; }
 
     function pauseGame() { isPaused = true; document.getElementById('pause-menu').classList.add('visible'); }
     function resumeGame() { isPaused = false; document.getElementById('pause-menu').classList.remove('visible'); }
 
-    function openShop() {
-      isPaused = true;
-      document.getElementById('pause-menu').classList.remove('visible');
-      document.getElementById('shop-menu').classList.add('visible');
-    }
-    function closeShop() {
-      document.getElementById('shop-menu').classList.remove('visible');
-      isPaused = false;
-    }
+    function openShop() { isPaused = true; document.getElementById('shop-menu').classList.add('visible'); }
+    function closeShop() { isPaused = false; document.getElementById('shop-menu').classList.remove('visible'); }
 
-    let playerState = { evoIdx: 0, coins: 150, collar: false, glasses: false };
-    function buyItem(item, cost) {
-      if (playerState.coins >= cost && !playerState[item]) {
+    function buyAccessory(type, cost) {
+      if (playerState.coins >= cost && !playerState.accessories.includes(type)) {
         playerState.coins -= cost;
-        playerState[item] = true;
+        playerState.accessories.push(type);
         playSound('coin');
         document.getElementById('player-coins').innerText = playerState.coins;
-        alert('Acquisto effettuato con successo!');
+        alert("Acquistato con successo!");
       } else {
-        alert('Monete insufficienti o oggetto già posseduto!');
+        alert("Monete insufficienti o già posseduto!");
       }
     }
 
@@ -383,10 +380,8 @@
         menu.style.opacity = '0';
         setTimeout(() => {
           menu.style.display = 'none';
-          const ui = document.getElementById('ui-layer');
-          const st = document.getElementById('stamina-container');
-          if (ui) ui.classList.add('visible');
-          if (st) st.style.display = 'flex';
+          document.getElementById('ui-layer').classList.add('visible');
+          document.getElementById('stamina-container').style.display = 'flex';
         }, 400);
       }
 
@@ -413,7 +408,7 @@
         return tex;
       }
 
-      function generateBuildingTexture(wallColor, windowColor) {
+      function generateBuildingTexture(wallColor) {
         const c = document.createElement('canvas'); c.width = 256; c.height = 256;
         const ctx = c.getContext('2d');
         ctx.fillStyle = wallColor; ctx.fillRect(0, 0, 256, 256);
@@ -421,12 +416,10 @@
           ctx.strokeStyle = 'rgba(0,0,0,0.15)'; ctx.lineWidth = 1;
           ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(256, y); ctx.stroke();
         }
-        ctx.fillStyle = windowColor;
+        ctx.fillStyle = '#fefae0';
         for (let y = 20; y < 240; y += 40) {
           for (let x = 20; x < 240; x += 35) {
             ctx.fillRect(x, y, 18, 24);
-            ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.fillRect(x + 2, y + 2, 6, 10);
-            ctx.fillStyle = windowColor;
           }
         }
         const tex = new THREE.CanvasTexture(c);
@@ -440,4 +433,258 @@
         ctx.fillStyle = colorHex; ctx.fillRect(0, 0, 128, 128);
         for (let i = 0; i < 2000; i++) {
           ctx.fillStyle = 'rgba(0,0,0,0.1)';
-          ctx.fillRect(Math.random() * 128
+          ctx.fillRect(Math.random() * 128, Math.random() * 128, 1, 4);
+        }
+        return new THREE.CanvasTexture(c);
+      }
+
+      const scene = new THREE.Scene();
+      scene.fog = new THREE.FogExp2(0x1a1e29, 0.003);
+
+      const skyGeo = new THREE.SphereGeometry(700, 32, 32);
+      const skyMat = new THREE.MeshBasicMaterial({ color: 0xff6b00, side: THREE.BackSide });
+      scene.add(new THREE.Mesh(skyGeo, skyMat));
+
+      const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.shadowMap.enabled = true;
+
+      scene.add(new THREE.AmbientLight(0xffedd5, 0.85));
+      const sunLight = new THREE.DirectionalLight(0xffb020, 1.5);
+      sunLight.position.set(200, 150, 200);
+      sunLight.castShadow = true;
+      scene.add(sunLight);
+
+      const ground = new THREE.Mesh(
+        new THREE.PlaneGeometry(1200, 1200),
+        new THREE.MeshStandardMaterial({ map: generateAsphaltTexture(), roughness: 0.8 })
+      );
+      ground.rotation.x = -Math.PI / 2;
+      ground.receiveShadow = true;
+      scene.add(ground);
+
+      // Spiaggia e Mare
+      const beach = new THREE.Mesh(new THREE.PlaneGeometry(400, 200), new THREE.MeshStandardMaterial({ color: 0xd9b382, roughness: 0.9 }));
+      beach.rotation.x = -Math.PI / 2; beach.position.set(0, 0.1, 450); scene.add(beach);
+
+      const sea = new THREE.Mesh(new THREE.PlaneGeometry(800, 400), new THREE.MeshStandardMaterial({ color: 0x0284c7, roughness: 0.1, transparent: true, opacity: 0.85 }));
+      sea.rotation.x = -Math.PI / 2; sea.position.set(0, -0.5, 750); scene.add(sea);
+
+      // Easter Egg Locale: Monumento a blocchi in Piazza Matrice
+      const monument = new THREE.Mesh(
+        new THREE.CylinderGeometry(2, 3, 8, 6),
+        new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.4 })
+      );
+      monument.position.set(0, 4, -130);
+      scene.add(monument);
+
+      const DISTRICTS = [
+        { name: 'Matrice (Centro)', x: 0, z: -130, radius: 85, color: '#ef4444' },
+        { name: 'San Giovanni', x: -190, z: -50, radius: 80, color: '#f59e0b' },
+        { name: 'Badune', x: 190, z: -50, radius: 80, color: '#3b82f6' },
+        { name: 'Pizzumulu', x: 0, z: 40, radius: 75, color: '#10b981' }
+      ];
+
+      const bTex1 = generateBuildingTexture('#d4a373');
+      const buildingColliders = [];
+
+      DISTRICTS.forEach(d => {
+        for (let i = 0; i < 6; i++) {
+          const angle = (i / 6) * Math.PI * 2;
+          const dist = 32 + Math.random() * 30;
+          const w = 16, h = 25, l = 16;
+          const building = new THREE.Mesh(new THREE.BoxGeometry(w, h, l), new THREE.MeshStandardMaterial({ map: bTex1, roughness: 0.5 }));
+          const posX = d.x + Math.cos(angle) * dist, posZ = d.z + Math.sin(angle) * dist;
+          building.position.set(posX, h / 2, posZ);
+          scene.add(building);
+          buildingColliders.push({ minX: posX - w/2 - 1.5, maxX: posX + w/2 + 1.5, minZ: posZ - l/2 - 1.5, maxZ: posZ + l/2 + 1.5 });
+        }
+      });
+
+      // Veicoli Guidabili / Mobili
+      function createCarModel(colorHex) {
+        const group = new THREE.Group();
+        const base = new THREE.Mesh(new THREE.BoxGeometry(4.2, 1.2, 7.5), new THREE.MeshStandardMaterial({ color: colorHex }));
+        base.position.y = 0.8; group.add(base);
+        const cabin = new THREE.Mesh(new THREE.BoxGeometry(3.6, 1.1, 4), new THREE.MeshStandardMaterial({ color: 0x111827 }));
+        cabin.position.set(0, 1.8, -0.2); group.add(cabin);
+        return group;
+      }
+
+      const vehicles = [];
+      for (let i = 0; i < 4; i++) {
+        const vMesh = createCarModel(i % 2 === 0 ? 0xdc2626 : 0x2563eb);
+        vMesh.position.set(-200 + i * 120, 0, i % 2 === 0 ? -22 : 28);
+        scene.add(vMesh);
+        vehicles.push({ mesh: vMesh, speed: 1.2, minX: -300, maxX: 300 });
+      }
+
+      // Giocatore
+      const playerGroup = new THREE.Group();
+      playerGroup.position.set(0, 0, 0);
+      const playerFurMat = new THREE.MeshStandardMaterial({ map: generateFurTexture('#d97706'), roughness: 0.6 });
+
+      const torso = new THREE.Mesh(new THREE.BoxGeometry(2.2, 3, 1.3), playerFurMat);
+      torso.position.y = 3; playerGroup.add(torso);
+      const head = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.6, 1.6), playerFurMat);
+      head.position.y = 5.3; playerGroup.add(head);
+
+      scene.add(playerGroup);
+
+      // Funzione per salire/scendere dai veicoli
+      window.toggleVehicleDrive = function() {
+        if (!drivingVehicle) {
+          // Trova il veicolo più vicino
+          vehicles.forEach(v => {
+            if (Math.hypot(playerGroup.position.x - v.mesh.position.x, playerGroup.position.z - v.mesh.position.z) < 6) {
+              drivingVehicle = v;
+              playerGroup.visible = false;
+              alert("Sei salito a bordo del veicolo! Usa il joystick per guidare.");
+            }
+          });
+        } else {
+          playerGroup.position.copy(drivingVehicle.mesh.position);
+          playerGroup.position.x += 5;
+          playerGroup.visible = true;
+          drivingVehicle = null;
+          alert("Sei sceso dal veicolo.");
+        }
+      };
+
+      let cameraYaw = 0, cameraPitch = 0.5, isDragging = false, lastX = 0, lastY = 0, touchId = null;
+      window.addEventListener('touchstart', e => {
+        for (let t of e.changedTouches) {
+          if (!e.target.closest('.interactive') && touchId === null) {
+            touchId = t.identifier; lastX = t.clientX; lastY = t.clientY; isDragging = true;
+          }
+        }
+      });
+      window.addEventListener('touchmove', e => {
+        for (let t of e.changedTouches) {
+          if (t.identifier === touchId && isDragging) {
+            cameraYaw -= (t.clientX - lastX) * 0.005;
+            cameraPitch = Math.max(0.1, Math.min(1.4, cameraPitch + (t.clientY - lastY) * 0.005));
+            lastX = t.clientX; lastY = t.clientY;
+          }
+        }
+      });
+      window.addEventListener('touchend', e => {
+        for (let t of e.changedTouches) { if (t.identifier === touchId) { touchId = null; isDragging = false; } }
+      });
+
+      let moveInput = { x: 0, y: 0 };
+      const joystickZone = document.getElementById('joystick-zone');
+      const joystickStick = document.getElementById('joystick-stick');
+      let joyTouch = null;
+
+      joystickZone.addEventListener('touchstart', e => {
+        e.stopPropagation(); joyTouch = e.changedTouches[0].identifier; updateJoy(e.changedTouches[0]);
+      });
+      window.addEventListener('touchmove', e => {
+        for (let t of e.changedTouches) { if (t.identifier === joyTouch) updateJoy(t); }
+      });
+      window.addEventListener('touchend', e => {
+        for (let t of e.changedTouches) {
+          if (t.identifier === joyTouch) {
+            joyTouch = null; moveInput = { x: 0, y: 0 };
+            joystickStick.style.top = '32px'; joystickStick.style.left = '32px';
+          }
+        }
+      });
+
+      function updateJoy(t) {
+        const rect = joystickZone.getBoundingClientRect();
+        const dx = t.clientX - (rect.left + rect.width / 2), dy = t.clientY - (rect.top + rect.height / 2);
+        const dist = Math.min(40, Math.hypot(dx, dy)), angle = Math.atan2(dy, dx);
+        joystickStick.style.left = `${32 + Math.cos(angle) * dist}px`;
+        joystickStick.style.top = `${32 + Math.sin(angle) * dist}px`;
+        moveInput.x = (Math.cos(angle) * dist) / 40; moveInput.y = (Math.sin(angle) * dist) / 40;
+      }
+
+      window.actionJump = function() { playSound('jump'); };
+      window.actionPunch = function() { playSound('punch'); };
+
+      function checkCollision(x, z) {
+        return buildingColliders.some(b => x > b.minX && x < b.maxX && z > b.minZ && z < b.maxZ);
+      }
+
+      const minimapCanvas = document.getElementById('minimap-canvas');
+      const minimapCtx = minimapCanvas.getContext('2d');
+      function drawMiniMap() {
+        minimapCtx.clearRect(0, 0, 90, 90);
+        minimapCtx.fillStyle = '#0f172a'; minimapCtx.fillRect(0, 0, 90, 90);
+        const mapScale = 0.1, centerX = 45, centerY = 45;
+        DISTRICTS.forEach(d => {
+          const dx = centerX + (d.x - playerGroup.position.x) * mapScale;
+          const dz = centerY + (d.z - playerGroup.position.z) * mapScale;
+          minimapCtx.fillStyle = d.color; minimapCtx.beginPath();
+          minimapCtx.arc(dx, dz, d.radius * mapScale, 0, Math.PI * 2); minimapCtx.fill();
+        });
+        minimapCtx.fillStyle = '#f59e0b'; minimapCtx.beginPath();
+        minimapCtx.arc(centerX, centerY, 3.5, 0, Math.PI * 2); minimapCtx.fill();
+      }
+
+      let lastTime = performance.now();
+      function animate(currentTime) {
+        requestAnimationFrame(animate);
+        const delta = Math.min((currentTime - lastTime) / 1000, 0.1);
+        lastTime = currentTime;
+
+        if (!isPaused && gameStarted) {
+          vehicles.forEach(v => {
+            v.mesh.position.x += v.speed;
+            if (v.mesh.position.x > v.maxX) v.mesh.position.x = v.minX;
+          });
+
+          const isMoving = Math.hypot(moveInput.x, moveInput.y) > 0.1;
+          if (isMoving) {
+            const camCos = Math.cos(cameraYaw), camSin = Math.sin(cameraYaw);
+            const mx = moveInput.x * camCos - moveInput.y * camSin;
+            const mz = moveInput.x * camSin + moveInput.y * camCos;
+
+            if (drivingVehicle) {
+              drivingVehicle.mesh.position.x += mx * 1.5;
+              drivingVehicle.mesh.position.z += mz * 1.5;
+              playerGroup.position.copy(drivingVehicle.mesh.position);
+            } else {
+              const nextX = playerGroup.position.x + mx * 1.0;
+              const nextZ = playerGroup.position.z + mz * 1.0;
+              if (!checkCollision(nextX, playerGroup.position.z)) playerGroup.position.x = nextX;
+              if (!checkCollision(playerGroup.position.x, nextZ)) playerGroup.position.z = nextZ;
+              playerGroup.rotation.y = Math.atan2(mx, mz);
+            }
+          }
+        }
+
+        const targetPos = drivingVehicle ? drivingVehicle.mesh.position : playerGroup.position;
+        const camDist = 22;
+        camera.position.x = targetPos.x + Math.sin(cameraYaw) * Math.cos(cameraPitch) * camDist;
+        camera.position.y = targetPos.y + Math.sin(cameraPitch) * camDist + 3;
+        camera.position.z = targetPos.z + Math.cos(cameraYaw) * Math.cos(cameraPitch) * camDist;
+        camera.lookAt(targetPos.x, targetPos.y + 3.5, targetPos.z);
+
+        if (gameStarted && !isPaused) drawMiniMap();
+        renderer.render(scene, camera);
+      }
+
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      animate(performance.now());
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const btn = document.getElementById('btn-play-trigger');
+      if (btn) {
+        btn.addEventListener('click', startGame);
+        btn.addEventListener('touchstart', startGame, { passive: false });
+      }
+    });
+  </script>
+</body>
+</html>
