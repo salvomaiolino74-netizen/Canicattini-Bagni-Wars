@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Canicattini Bagni 3D - Stable Edition</title>
+  <title>Canicattini Bagni 3D - Fixed Edition</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; touch-action: none; }
     body {
@@ -20,7 +20,7 @@
     #main-menu {
       position: absolute;
       top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(11, 15, 25, 0.95);
+      background: rgba(11, 15, 25, 0.9);
       backdrop-filter: blur(12px);
       z-index: 100;
       display: flex;
@@ -28,11 +28,10 @@
       justify-content: center;
       align-items: center;
       gap: 15px;
-      transition: opacity 0.6s ease, transform 0.6s ease;
+      transition: opacity 0.5s ease;
     }
     #main-menu.fade-out {
       opacity: 0;
-      transform: scale(1.05);
       pointer-events: none;
     }
     .menu-title {
@@ -65,7 +64,7 @@
     #pause-menu {
       position: absolute;
       top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(0, 0, 0, 0.8);
+      background: rgba(0, 0, 0, 0.85);
       backdrop-filter: blur(10px);
       z-index: 90;
       display: flex;
@@ -78,306 +77,3 @@
       transition: opacity 0.3s ease;
     }
     #pause-menu.visible {
-      opacity: 1;
-      pointer-events: auto;
-    }
-    .pause-title { font-size: 2rem; font-weight: 900; color: #fff; }
-
-    /* --- BARRA RESISTENZA --- */
-    .stamina-container {
-      position: absolute;
-      top: 12px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 180px;
-      background: rgba(15, 23, 42, 0.85);
-      border: 2px solid rgba(255, 255, 255, 0.2);
-      border-radius: 10px;
-      padding: 4px;
-      z-index: 20;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.6);
-    }
-    .stamina-label {
-      font-size: 0.7rem;
-      font-weight: bold;
-      color: #94a3b8;
-      margin-bottom: 2px;
-      text-transform: uppercase;
-    }
-    .stamina-bar-bg {
-      width: 100%;
-      height: 8px;
-      background: #334155;
-      border-radius: 4px;
-      overflow: hidden;
-    }
-    .stamina-bar-fill {
-      width: 100%;
-      height: 100%;
-      background: #3b82f6;
-      transition: width 0.1s linear;
-    }
-
-    /* --- INTERFACCIA DI GIOCO --- */
-    .ui-layer {
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      pointer-events: none;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: 12px 24px;
-      z-index: 10;
-      opacity: 0;
-      transition: opacity 1s ease;
-    }
-    .ui-layer.visible { opacity: 1; }
-    .interactive { pointer-events: auto; }
-
-    .top-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      width: 100%;
-    }
-    .top-left-group {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-    }
-    .hud-box {
-      background: rgba(15, 23, 42, 0.85);
-      border: 2px solid rgba(255, 255, 255, 0.2);
-      padding: 8px 14px;
-      border-radius: 12px;
-      font-weight: bold;
-      font-size: 0.9rem;
-      backdrop-filter: blur(8px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.6);
-    }
-    .gold { color: #f59e0b; }
-    .district-hud {
-      background: #dc2626;
-      color: white;
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-weight: 900;
-      text-transform: uppercase;
-      font-size: 0.85rem;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.6);
-    }
-
-    /* --- MINI MAPPA --- */
-    #minimap {
-      width: 90px;
-      height: 90px;
-      background: rgba(15, 23, 42, 0.9);
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      border-radius: 50%;
-      position: relative;
-      overflow: hidden;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.6);
-    }
-    #minimap-canvas { width: 100%; height: 100%; display: block; }
-
-    .btn-pause {
-      background: rgba(15, 23, 42, 0.85);
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      color: white;
-      width: 40px; height: 40px;
-      border-radius: 50%;
-      font-size: 1.1rem;
-      display: flex; justify-content: center; align-items: center;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.6);
-    }
-
-    /* --- PANNELLO CONTROLLI --- */
-    .controls-panel {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      width: 100%;
-      padding-bottom: 5px;
-    }
-    .touch-joystick {
-      width: 110px;
-      height: 110px;
-      background: rgba(255, 255, 255, 0.15);
-      border: 2px solid rgba(255, 255, 255, 0.4);
-      border-radius: 50%;
-      position: relative;
-    }
-    .joystick-stick {
-      width: 45px;
-      height: 45px;
-      background: #f59e0b;
-      border-radius: 50%;
-      position: absolute;
-      top: 32px; left: 32px;
-      box-shadow: 0 0 12px rgba(245, 158, 11, 0.8);
-    }
-    .action-grid {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-    }
-    .btn-action {
-      width: 50px; height: 50px;
-      border-radius: 50%;
-      border: 2px solid rgba(255,255,255,0.4);
-      background: rgba(15, 23, 42, 0.85);
-      color: white;
-      font-size: 1.1rem;
-      display: flex; justify-content: center; align-items: center;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.6);
-    }
-    .btn-action:active { transform: scale(0.9); }
-    .btn-punch { background: #dc2626; font-size: 1.3rem; }
-    .btn-bld { background: #16a34a; }
-    .btn-jmp { background: #eab308; }
-    .btn-run { background: #3b82f6; font-size: 1.2rem; }
-  </style>
-</head>
-<body>
-
-  <!-- Menu Principale -->
-  <div id="main-menu">
-    <div class="menu-title">PET WARS 3D<br><span style="font-size:1.3rem; color:#fff;">Canicattini Bagni</span></div>
-    <div class="menu-subtitle">Landscape Edition - Meteo & Nuoto</div>
-    <button class="btn-play interactive" onclick="startGame()">GIOCA</button>
-  </div>
-
-  <!-- Menu Pausa -->
-  <div id="pause-menu" class="interactive">
-    <div class="pause-title">PARTITA IN PAUSA</div>
-    <button class="btn-play" onclick="resumeGame()">RIPRENDI</button>
-  </div>
-
-  <!-- Barra Resistenza -->
-  <div class="stamina-container" id="stamina-container" style="display: none;">
-    <div class="stamina-label" id="stamina-label">Resistenza</div>
-    <div class="stamina-bar-bg">
-      <div class="stamina-bar-fill" id="stamina-fill"></div>
-    </div>
-  </div>
-
-  <canvas id="game-canvas"></canvas>
-
-  <div class="ui-layer" id="ui-layer">
-    <div class="top-bar">
-      <div class="top-left-group">
-        <div id="minimap">
-          <canvas id="minimap-canvas" width="90" height="90"></canvas>
-        </div>
-        <div class="hud-box">🐾 <span id="player-evo">Cane Randagio</span> | 🪙 <span class="gold" id="player-coins">150</span></div>
-      </div>
-      
-      <div style="display:flex; gap:10px; align-items:center;">
-        <div class="district-hud" id="current-district">Matrice</div>
-        <button class="btn-pause interactive" onclick="pauseGame()">⏸️</button>
-      </div>
-    </div>
-
-    <div class="controls-panel">
-      <div class="touch-joystick interactive" id="joystick-zone">
-        <div class="joystick-stick" id="joystick-stick"></div>
-      </div>
-      <div class="action-grid interactive">
-        <button class="btn-action btn-run" ontouchstart="startRunning()" ontouchend="stopRunning()" onmousedown="startRunning()" onmouseup="stopRunning()">🏃‍♂️</button>
-        <button class="btn-action btn-punch" onclick="actionPunch()">🥊</button>
-        <button class="btn-action btn-jmp" onclick="actionJump()">🦘</button>
-        <button class="btn-action btn-bld" onclick="actionBuild()">🏗️</button>
-        <button class="btn-action" style="background:#8b5cf6;" onclick="actionEvolve()">✨</button>
-      </div>
-    </div>
-  </div>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script>
-    let gameStarted = false;
-    let isPaused = false;
-
-    function startGame() {
-      if (gameStarted) return;
-      gameStarted = true;
-
-      const menu = document.getElementById('main-menu');
-      menu.classList.add('fade-out');
-
-      setTimeout(() => {
-        menu.style.display = 'none';
-        document.getElementById('ui-layer').classList.add('visible');
-        document.getElementById('stamina-container').style.display = 'flex';
-      }, 600);
-    }
-
-    function pauseGame() {
-      isPaused = true;
-      document.getElementById('pause-menu').classList.add('visible');
-    }
-
-    function resumeGame() {
-      isPaused = false;
-      document.getElementById('pause-menu').classList.remove('visible');
-    }
-
-    window.addEventListener('load', () => {
-      try {
-        function generateAsphaltTexture() {
-          const c = document.createElement('canvas');
-          c.width = 512; c.height = 512;
-          const ctx = c.getContext('2d');
-          ctx.fillStyle = '#1e222b';
-          ctx.fillRect(0, 0, 512, 512);
-
-          for (let i = 0; i < 6000; i++) {
-            const val = Math.random() * 40;
-            ctx.fillStyle = `rgba(${80+val},${80+val},${80+val},0.08)`;
-            ctx.fillRect(Math.random() * 512, Math.random() * 512, 2, 2);
-          }
-
-          ctx.strokeStyle = '#f59e0b';
-          ctx.lineWidth = 10;
-          ctx.setLineDash([40, 40]);
-          ctx.beginPath();
-          ctx.moveTo(256, 0); ctx.lineTo(256, 512);
-          ctx.stroke();
-
-          const tex = new THREE.CanvasTexture(c);
-          tex.wrapS = THREE.RepeatWrapping;
-          tex.wrapT = THREE.RepeatWrapping;
-          tex.repeat.set(25, 25);
-          return tex;
-        }
-
-        function generateBuildingTexture(wallColor, windowColor) {
-          const c = document.createElement('canvas');
-          c.width = 256; c.height = 256;
-          const ctx = c.getContext('2d');
-          ctx.fillStyle = wallColor;
-          ctx.fillRect(0, 0, 256, 256);
-
-          for (let y = 0; y < 256; y += 16) {
-            ctx.strokeStyle = 'rgba(0,0,0,0.15)';
-            ctx.lineWidth = 1;
-            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(256, y); ctx.stroke();
-          }
-
-          ctx.fillStyle = windowColor;
-          for (let y = 20; y < 240; y += 40) {
-            for (let x = 20; x < 240; x += 35) {
-              ctx.fillRect(x, y, 18, 24);
-              ctx.fillStyle = 'rgba(255,255,255,0.4)';
-              ctx.fillRect(x + 2, y + 2, 6, 10);
-              ctx.fillStyle = windowColor;
-            }
-          }
-
-          const tex = new THREE.CanvasTexture(c);
-          tex.wrapS = THREE.RepeatWrapping;
-          tex.wrapT = THREE.RepeatWrapping;
-          return tex;
