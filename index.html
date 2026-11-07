@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Canicattini Bagni 3D - Full HD Edition</title>
+  <title>Canicattini Bagni 3D - Sunset Edition</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; touch-action: none; }
     body {
@@ -343,12 +343,12 @@
         const c = document.createElement('canvas');
         c.width = 512; c.height = 512;
         const ctx = c.getContext('2d');
-        ctx.fillStyle = '#22252c';
+        ctx.fillStyle = '#1e222b';
         ctx.fillRect(0, 0, 512, 512);
 
         for (let i = 0; i < 8000; i++) {
           const val = Math.random() * 40;
-          ctx.fillStyle = `rgba(${100+val},${100+val},${100+val},0.08)`;
+          ctx.fillStyle = `rgba(${80+val},${80+val},${80+val},0.08)`;
           ctx.fillRect(Math.random() * 512, Math.random() * 512, 2, 2);
         }
 
@@ -411,23 +411,41 @@
       const canvas = document.getElementById('game-canvas');
       const scene = new THREE.Scene();
 
-      const vertexShader = `
-        varying vec3 vWorldPosition;
-        void main() {
-          vec4 worldPosition = modelMatrix * vec4(position, 1.0);
-          vWorldPosition = worldPosition.xyz;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      // --- CARICAMENTO DELLA TEXTURE DEL CIELO AL TRAMONTO ---
+      const textureLoader = new THREE.TextureLoader();
+      textureLoader.load(
+        'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1920&auto=format&fit=crop', // Immagine stabile di riserva con colori caldi/tramonto o l'URI diretto se preferisci
+        function(skyTexture) {
+          skyTexture.wrapS = THREE.RepeatWrapping;
+          skyTexture.wrapT = THREE.ClampToEdgeWrapping;
+          const skyGeo = new THREE.SphereGeometry(700, 32, 32);
+          const skyMat = new THREE.MeshBasicMaterial({ map: skyTexture, side: THREE.BackSide });
+          const skyMesh = new THREE.Mesh(skyGeo, skyMat);
+          scene.add(skyMesh);
+        },
+        undefined,
+        function(err) {
+          // Fallback cielo se l'immagine esterna dovesse fallire
+          const skyGeo = new THREE.SphereGeometry(700, 32, 15);
+          const skyMat = new THREE.MeshBasicMaterial({ color: 0xd97706, side: THREE.BackSide });
+          scene.add(new THREE.Mesh(skyGeo, skyMat));
         }
-      `;
-      const fragmentShader = `
-        varying vec3 vWorldPosition;
-        void main() {
-          float h = normalize(vWorldPosition).y;
-          gl_FragColor = mix(vec4(0.9, 0.95, 1.0, 1.0), vec4(0.2, 0.5, 0.85, 1.0), max(0.0, h));
-        }
-      `;
-      const skyGeo = new THREE.SphereGeometry(600, 32, 15);
-      const skyMat = new THREE.ShaderMaterial({ vertexShader, fragmentShader, side: THREE.BackSide });
+      );
+
+      // In alternativa, incorporiamo direttamente la tua immagine del cielo via Data URL se necessario, ma usiamo il loader standard di Three.js. 
+      // Sostituisci l'URL qui sotto con il link diretto o la tua immagine se l'hai caricata su GitHub:
+      const skyTexUrl = 'https://raw.githubusercontent.com/4-netizen/4-netizen.github.io/main/sky.jpg'; // Puoi mettere qui il link dell'immagine del cielo se la carichi nella repo
+      
+      // Caricamento sicuro della texture del cielo fornita
+      const customSkyTexture = textureLoader.load('https://images.unsplash.com/photo-1495616811223-4d98c6e9c869?q=80&w=2000&auto=format&fit=crop', (tex) => {
+        tex.wrapS = THREE.RepeatWrapping;
+        tex.wrapT = THREE.ClampToEdgeWrapping;
+        skyMat.map = tex;
+        skyMat.needsUpdate = true;
+      });
+
+      const skyGeo = new THREE.SphereGeometry(700, 32, 32);
+      const skyMat = new THREE.MeshBasicMaterial({ color: 0xff7b00, side: THREE.BackSide });
       const sky = new THREE.Mesh(skyGeo, skyMat);
       scene.add(sky);
 
@@ -437,11 +455,12 @@
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       renderer.shadowMap.enabled = true;
 
-      const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
+      // Luce calda da tramonto (Golden Hour)
+      const ambientLight = new THREE.AmbientLight(0xffedd5, 0.85);
       scene.add(ambientLight);
 
-      const sunLight = new THREE.DirectionalLight(0xfffaed, 1.3);
-      sunLight.position.set(150, 300, 150);
+      const sunLight = new THREE.DirectionalLight(0xffb020, 1.5);
+      sunLight.position.set(200, 150, 200);
       sunLight.castShadow = true;
       scene.add(sunLight);
 
