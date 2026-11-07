@@ -217,4 +217,227 @@
       top: 32px; left: 32px;
       box-shadow: 0 0 12px rgba(245, 158, 11, 0.8);
     }
-    .action-grid { display: flex
+    .action-grid { display: flex; gap: 10px; align-items: center; }
+    .btn-action {
+      width: 50px; height: 50px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.4);
+      background: rgba(15, 23, 42, 0.85);
+      color: white;
+      font-size: 1.1rem;
+      display: flex; justify-content: center; align-items: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+    }
+    .btn-action:active { transform: scale(0.9); }
+  </style>
+</head>
+<body>
+
+  <div id="main-menu">
+    <div class="menu-title">PET WARS 3D<br><span style="font-size:1.3rem; color:#fff;">Canicattini Bagni</span></div>
+    <div class="menu-subtitle">Shop & 360° Cam Edition</div>
+    <button class="btn-play" id="btn-play-trigger">GIOCA</button>
+  </div>
+
+  <div id="pause-menu" class="interactive">
+    <h2 style="color:#fff; margin-bottom:15px; font-size:2rem;">PARTITA IN PAUSA</h2>
+    <button class="btn-play" onclick="resumeGame()" style="margin-bottom:10px;">RIPRENDI</button>
+    <button class="btn-play" onclick="openShop()" style="background:linear-gradient(135deg, #3b82f6, #1d4ed8); color:#fff;">🛒 NEGOZIO</button>
+  </div>
+
+  <div id="shop-menu" class="interactive">
+    <div class="shop-container">
+      <h2 style="color:#f59e0b; font-size:1.5rem;">NEGOZIO SKIN</h2>
+      <div class="shop-item">
+        <div>🐶 <b>Collare Borchiato</b><br><small style="color:#94a3b8;">Prezzo: 50 🪙</small></div>
+        <button class="btn-buy" onclick="buyItem('collar', 50)">ACQUISTA</button>
+      </div>
+      <div class="shop-item">
+        <div>🕶️ <b>Occhiali Gangster</b><br><small style="color:#94a3b8;">Prezzo: 100 🪙</small></div>
+        <button class="btn-buy" onclick="buyItem('glasses', 100)">ACQUISTA</button>
+      </div>
+      <button class="btn-play" onclick="closeShop()" style="width:100%; padding:10px; font-size:1rem;">CHIUDI</button>
+    </div>
+  </div>
+
+  <div class="stamina-container" id="stamina-container">
+    <div class="stamina-label" id="stamina-label">Resistenza</div>
+    <div class="stamina-bar-bg">
+      <div class="stamina-bar-fill" id="stamina-fill"></div>
+    </div>
+  </div>
+
+  <canvas id="game-canvas"></canvas>
+
+  <div class="ui-layer" id="ui-layer">
+    <div class="top-bar">
+      <div class="top-left-group">
+        <div id="minimap"><canvas id="minimap-canvas" width="90" height="90"></canvas></div>
+        <div class="hud-box">🐾 <span id="player-evo">Cane Randagio</span> | 🪙 <span id="player-coins" style="color:#f59e0b;">150</span></div>
+      </div>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <div class="district-hud" id="current-district">Matrice</div>
+        <button class="btn-pause interactive" onclick="pauseGame()">⏸️</button>
+      </div>
+    </div>
+
+    <div class="controls-panel">
+      <div class="touch-joystick interactive" id="joystick-zone">
+        <div class="joystick-stick" id="joystick-stick"></div>
+      </div>
+      <div class="action-grid interactive">
+        <button class="btn-action" style="background:#3b82f6;" ontouchstart="startRunning()" ontouchend="stopRunning()" onmousedown="startRunning()" onmouseup="stopRunning()">🏃‍♂️</button>
+        <button class="btn-action" style="background:#dc2626;" onclick="actionPunch()">🥊</button>
+        <button class="btn-action" style="background:#eab308;" onclick="actionJump()">🦘</button>
+        <button class="btn-action" style="background:#16a34a;" onclick="openShop()">🛒</button>
+        <button class="btn-action" style="background:#8b5cf6;" onclick="actionEvolve()">✨</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    let gameStarted = false;
+    let isPaused = false;
+    let audioCtx = null;
+
+    function initAudio() {
+      if (!audioCtx) {
+        try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
+      }
+    }
+
+    function playSound(type) {
+      if (!audioCtx) return;
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        const now = audioCtx.currentTime;
+        if (type === 'jump') {
+          osc.type = 'sine'; osc.frequency.setValueAtTime(150, now); osc.frequency.exponentialRampToValueAtTime(350, now + 0.15);
+          gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+          osc.start(now); osc.stop(now + 0.15);
+        } else if (type === 'punch') {
+          osc.type = 'triangle'; osc.frequency.setValueAtTime(120, now); osc.frequency.linearRampToValueAtTime(40, now + 0.1);
+          gain.gain.setValueAtTime(0.3, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.1);
+          osc.start(now); osc.stop(now + 0.1);
+        } else if (type === 'coin') {
+          osc.type = 'sine'; osc.frequency.setValueAtTime(600, now); osc.frequency.setValueAtTime(900, now + 0.08);
+          gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+          osc.start(now); osc.stop(now + 0.2);
+        } else if (type === 'hit') {
+          osc.type = 'sawtooth'; osc.frequency.setValueAtTime(100, now); osc.frequency.linearRampToValueAtTime(30, now + 0.4);
+          gain.gain.setValueAtTime(0.4, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.4);
+          osc.start(now); osc.stop(now + 0.4);
+        }
+      } catch(e) {}
+    }
+
+    let isRunningPressed = false;
+    let stamina = 100;
+    let isExhausted = false;
+    const maxStaminaTime = 7.0; 
+    const recoverTime = 7.0; 
+
+    let isHitByVehicle = false;
+    let hitAnimTimer = 0;
+
+    function startRunning() { if (!isExhausted && !isHitByVehicle) isRunningPressed = true; }
+    function stopRunning() { isRunningPressed = false; }
+
+    function pauseGame() { isPaused = true; document.getElementById('pause-menu').classList.add('visible'); }
+    function resumeGame() { isPaused = false; document.getElementById('pause-menu').classList.remove('visible'); }
+
+    function openShop() {
+      isPaused = true;
+      document.getElementById('pause-menu').classList.remove('visible');
+      document.getElementById('shop-menu').classList.add('visible');
+    }
+    function closeShop() {
+      document.getElementById('shop-menu').classList.remove('visible');
+      isPaused = false;
+    }
+
+    let playerState = { evoIdx: 0, coins: 150, collar: false, glasses: false };
+    function buyItem(item, cost) {
+      if (playerState.coins >= cost && !playerState[item]) {
+        playerState.coins -= cost;
+        playerState[item] = true;
+        playSound('coin');
+        document.getElementById('player-coins').innerText = playerState.coins;
+        alert('Acquisto effettuato con successo!');
+      } else {
+        alert('Monete insufficienti o oggetto già posseduto!');
+      }
+    }
+
+    function startGame(e) {
+      if (e) e.preventDefault();
+      if (gameStarted) return;
+      gameStarted = true;
+      initAudio();
+
+      const menu = document.getElementById('main-menu');
+      if (menu) {
+        menu.style.opacity = '0';
+        setTimeout(() => {
+          menu.style.display = 'none';
+          const ui = document.getElementById('ui-layer');
+          const st = document.getElementById('stamina-container');
+          if (ui) ui.classList.add('visible');
+          if (st) st.style.display = 'flex';
+        }, 400);
+      }
+
+      initGameEngine();
+    }
+
+    function initGameEngine() {
+      const canvas = document.getElementById('game-canvas');
+      if (!canvas) return;
+
+      function generateAsphaltTexture() {
+        const c = document.createElement('canvas'); c.width = 512; c.height = 512;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#1e222b'; ctx.fillRect(0, 0, 512, 512);
+        for (let i = 0; i < 8000; i++) {
+          const val = Math.random() * 40;
+          ctx.fillStyle = `rgba(${80+val},${80+val},${80+val},0.08)`;
+          ctx.fillRect(Math.random() * 512, Math.random() * 512, 2, 2);
+        }
+        ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 10; ctx.setLineDash([40, 40]);
+        ctx.beginPath(); ctx.moveTo(256, 0); ctx.lineTo(256, 512); ctx.stroke();
+        const tex = new THREE.CanvasTexture(c);
+        tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping; tex.repeat.set(25, 25);
+        return tex;
+      }
+
+      function generateBuildingTexture(wallColor, windowColor) {
+        const c = document.createElement('canvas'); c.width = 256; c.height = 256;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = wallColor; ctx.fillRect(0, 0, 256, 256);
+        for (let y = 0; y < 256; y += 16) {
+          ctx.strokeStyle = 'rgba(0,0,0,0.15)'; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(256, y); ctx.stroke();
+        }
+        ctx.fillStyle = windowColor;
+        for (let y = 20; y < 240; y += 40) {
+          for (let x = 20; x < 240; x += 35) {
+            ctx.fillRect(x, y, 18, 24);
+            ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.fillRect(x + 2, y + 2, 6, 10);
+            ctx.fillStyle = windowColor;
+          }
+        }
+        const tex = new THREE.CanvasTexture(c);
+        tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
+        return tex;
+      }
+
+      function generateFurTexture(colorHex) {
+        const c = document.createElement('canvas'); c.width = 128; c.height = 128;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = colorHex; ctx.fillRect(0, 0, 128, 128);
+        for (let i = 0; i < 2000; i++) {
+          ctx.fillStyle = 'rgba(0,0,0,0.1)';
+          ctx.fillRect(Math.random() * 128
