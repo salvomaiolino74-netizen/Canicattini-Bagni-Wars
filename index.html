@@ -83,6 +83,44 @@
     }
     .pause-title { font-size: 2rem; font-weight: 900; color: #fff; }
 
+    /* --- BARRA RESISTENZA (STAMINA) IN ALTO AL CENTRO --- */
+    .stamina-container {
+      position: absolute;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 180px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      padding: 4px;
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+    }
+    .stamina-label {
+      font-size: 0.7rem;
+      font-weight: bold;
+      color: #94a3b8;
+      margin-bottom: 2px;
+      text-transform: uppercase;
+    }
+    .stamina-bar-bg {
+      width: 100%;
+      height: 8px;
+      background: #334155;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .stamina-bar-fill {
+      width: 100%;
+      height: 100%;
+      background: #3b82f6;
+      transition: width 0.1s linear;
+    }
+
     /* --- INTERFACCIA DI GIOCO --- */
     .ui-layer {
       position: absolute;
@@ -104,6 +142,7 @@
       justify-content: space-between;
       align-items: flex-start;
       gap: 10px;
+      margin-top: 35px;
     }
     .top-left-group {
       display: flex;
@@ -200,6 +239,7 @@
     .btn-punch { background: #dc2626; font-size: 1.4rem; }
     .btn-bld { background: #16a34a; }
     .btn-jmp { background: #eab308; }
+    .btn-run { background: #3b82f6; font-size: 1.3rem; }
   </style>
 </head>
 <body>
@@ -217,12 +257,19 @@
     <button class="btn-play" onclick="resumeGame()">RIPRENDI</button>
   </div>
 
+  <!-- Barra Resistenza in alto al centro -->
+  <div class="stamina-container" id="stamina-container" style="display: none;">
+    <div class="stamina-label" id="stamina-label">Resistenza</div>
+    <div class="stamina-bar-bg">
+      <div class="stamina-bar-fill" id="stamina-fill"></div>
+    </div>
+  </div>
+
   <canvas id="game-canvas"></canvas>
 
   <div class="ui-layer" id="ui-layer">
     <div class="top-bar">
       <div class="top-left-group">
-        <!-- Mini Mappa -->
         <div id="minimap">
           <canvas id="minimap-canvas" width="110" height="110"></canvas>
         </div>
@@ -240,11 +287,11 @@
         <div class="joystick-stick" id="joystick-stick"></div>
       </div>
       <div class="action-grid interactive">
+        <button class="btn-action btn-run" ontouchstart="startRunning()" ontouchend="stopRunning()" onmousedown="startRunning()" onmouseup="stopRunning()">🏃‍♂️</button>
         <button class="btn-action btn-punch" onclick="actionPunch()">🥊</button>
         <button class="btn-action btn-jmp" onclick="actionJump()">🦘</button>
         <button class="btn-action btn-bld" onclick="actionBuild()">🏗️</button>
         <button class="btn-action" style="background:#8b5cf6;" onclick="actionEvolve()">✨</button>
-        <button class="btn-action" style="background:#2563eb;" onclick="actionAttack()">⚡</button>
       </div>
     </div>
   </div>
@@ -253,6 +300,20 @@
   <script>
     let gameStarted = false;
     let isPaused = false;
+
+    // Gestione Corsa e Resistenza (Stamina)
+    let isRunningPressed = false;
+    let stamina = 100;
+    let isExhausted = false;
+    const maxStaminaTime = 7.0; // secondi di corsa
+    const recoverTime = 7.0; // secondi di recupero
+
+    function startRunning() {
+      if (!isExhausted) isRunningPressed = true;
+    }
+    function stopRunning() {
+      isRunningPressed = false;
+    }
 
     function startGame() {
       if (gameStarted) return;
@@ -264,6 +325,7 @@
       setTimeout(() => {
         menu.style.display = 'none';
         document.getElementById('ui-layer').classList.add('visible');
+        document.getElementById('stamina-container').style.display = 'flex';
       }, 800);
     }
 
@@ -455,374 +517,4 @@
       const torso = new THREE.Mesh(new THREE.BoxGeometry(2.2, 3, 1.3), playerFurMat);
       torso.position.y = 3; torso.castShadow = true; playerGroup.add(torso);
 
-      const head = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.6, 1.6), playerFurMat);
-      head.position.y = 5.3; head.castShadow = true; playerGroup.add(head);
-
-      const snout = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.7, 0.9), new THREE.MeshStandardMaterial({ color: 0x1e1e1e }));
-      snout.position.set(0, 5.1, 1); playerGroup.add(snout);
-
-      const armGeo = new THREE.BoxGeometry(0.7, 2.5, 0.7);
-      const leftArm = new THREE.Mesh(armGeo, playerFurMat); leftArm.position.set(-1.5, 3, 0); leftArm.castShadow = true; playerGroup.add(leftArm);
-      const rightArm = new THREE.Mesh(armGeo, playerFurMat); rightArm.position.set(1.5, 3, 0); rightArm.castShadow = true; playerGroup.add(rightArm);
-
-      const legGeo = new THREE.BoxGeometry(0.8, 2.5, 0.8);
-      const leftLeg = new THREE.Mesh(legGeo, playerFurMat); leftLeg.position.set(-0.6, 1.25, 0); leftLeg.castShadow = true; playerGroup.add(leftLeg);
-      const rightLeg = new THREE.Mesh(legGeo, playerFurMat); rightLeg.position.set(0.6, 1.25, 0); rightLeg.castShadow = true; playerGroup.add(rightLeg);
-
-      scene.add(playerGroup);
-
-      // --- NPC ---
-      function createHumanNPCMesh() {
-        const group = new THREE.Group();
-        const skinMat = new THREE.MeshStandardMaterial({ color: 0xffdbac });
-        const shirtMat = new THREE.MeshStandardMaterial({ color: 0x2563eb });
-        const pantsMat = new THREE.MeshStandardMaterial({ color: 0x1e293b });
-
-        const t = new THREE.Mesh(new THREE.BoxGeometry(1.8, 2.8, 1), shirtMat);
-        t.position.y = 3; t.castShadow = true; group.add(t);
-        const h = new THREE.Mesh(new THREE.SphereGeometry(0.8, 12, 12), skinMat);
-        h.position.y = 5; h.castShadow = true; group.add(h);
-
-        return { mesh: group };
-      }
-
-      const npcs = [];
-      for (let i = 0; i < 6; i++) {
-        const data = createHumanNPCMesh();
-        const rx = (Math.random() - 0.5) * 220;
-        const rz = (Math.random() - 0.5) * 220;
-        data.mesh.position.set(rx, 0, rz);
-        scene.add(data.mesh);
-        npcs.push({ mesh: data.mesh, targetX: rx, targetZ: rz, speed: 0.5, timer: 0, hitTimer: 0 });
-      }
-
-      function updateNPC_AI(npc) {
-        if (isPaused) return;
-        if (npc.hitTimer > 0) {
-          npc.hitTimer--;
-          npc.mesh.rotation.z = Math.sin(npc.hitTimer * 0.5) * 0.4;
-          return;
-        } else {
-          npc.mesh.rotation.z = 0;
-        }
-
-        npc.timer--;
-        if (npc.timer <= 0) {
-          npc.timer = 120 + Math.floor(Math.random() * 100);
-          npc.targetX = npc.mesh.position.x + (Math.random() - 0.5) * 80;
-          npc.targetZ = npc.mesh.position.z + (Math.random() - 0.5) * 80;
-        }
-
-        const dx = npc.targetX - npc.mesh.position.x;
-        const dz = npc.targetZ - npc.mesh.position.z;
-        const dist = Math.hypot(dx, dz);
-
-        if (dist > 2) {
-          npc.mesh.position.x += (dx / dist) * npc.speed;
-          npc.mesh.position.z += (dz / dist) * npc.speed;
-          npc.mesh.rotation.y = Math.atan2(dx, dz);
-        }
-      }
-
-      // --- CONTROLLI ---
-      let cameraYaw = 0;
-      let isCameraDragging = false;
-      let cameraTouchId = null;
-      let lastTouchX = 0;
-      const cameraSensitivity = 0.003;
-
-      let velocityY = 0;
-      let isGrounded = true;
-      let punchTimer = 0;
-      const gravity = -0.018;
-      const jumpPower = 0.48;
-
-      const EVOLUTIONS = [
-        { name: 'Cane Randagio', speed: 0.9, color: '#d97706' },
-        { name: 'Lupo Guerriero', speed: 1.2, color: '#475569' },
-        { name: 'Pantera d\'Assalto', speed: 1.5, color: '#1e1b4b' },
-        { name: 'Leone Titano', speed: 1.8, color: '#eab308' }
-      ];
-      let playerState = { evoIdx: 0, coins: 150 };
-
-      let moveInput = { x: 0, y: 0 };
-      let playerAngle = 0;
-      let walkAnimTime = 0;
-      const keys = {};
-
-      window.addEventListener('keydown', e => {
-        keys[e.code] = true;
-        if (e.code === 'Space') actionJump();
-        if (e.code === 'KeyF') actionPunch();
-      });
-      window.addEventListener('keyup', e => keys[e.code] = false);
-
-      window.addEventListener('touchstart', e => {
-        for (let t of e.changedTouches) {
-          if (!e.target.closest('.interactive') && cameraTouchId === null) {
-            cameraTouchId = t.identifier;
-            lastTouchX = t.clientX;
-          }
-        }
-      });
-      window.addEventListener('touchmove', e => {
-        for (let t of e.changedTouches) {
-          if (t.identifier === cameraTouchId) {
-            const dx = t.clientX - lastTouchX;
-            cameraYaw -= dx * cameraSensitivity;
-            lastTouchX = t.clientX;
-          }
-        }
-      });
-      window.addEventListener('touchend', e => {
-        for (let t of e.changedTouches) {
-          if (t.identifier === cameraTouchId) cameraTouchId = null;
-        }
-      });
-
-      window.addEventListener('mousedown', e => {
-        if (!e.target.closest('.interactive')) {
-          isCameraDragging = true;
-          lastTouchX = e.clientX;
-        }
-      });
-      window.addEventListener('mousemove', e => {
-        if (isCameraDragging) {
-          const dx = e.clientX - lastTouchX;
-          cameraYaw -= dx * cameraSensitivity;
-          lastTouchX = e.clientX;
-        }
-      });
-      window.addEventListener('mouseup', () => isCameraDragging = false);
-
-      const joystickZone = document.getElementById('joystick-zone');
-      const joystickStick = document.getElementById('joystick-stick');
-      let joystickTouchId = null;
-
-      joystickZone.addEventListener('touchstart', e => {
-        e.stopPropagation();
-        const t = e.changedTouches[0];
-        joystickTouchId = t.identifier;
-        updateJoystick(t);
-      });
-      window.addEventListener('touchmove', e => {
-        for (let t of e.changedTouches) {
-          if (t.identifier === joystickTouchId) updateJoystick(t);
-        }
-      });
-      window.addEventListener('touchend', e => {
-        for (let t of e.changedTouches) {
-          if (t.identifier === joystickTouchId) {
-            joystickTouchId = null;
-            moveInput = { x: 0, y: 0 };
-            joystickStick.style.top = '35px';
-            joystickStick.style.left = '35px';
-          }
-        }
-      });
-
-      function updateJoystick(t) {
-        const rect = joystickZone.getBoundingClientRect();
-        const dx = t.clientX - (rect.left + rect.width / 2);
-        const dy = t.clientY - (rect.top + rect.height / 2);
-        const dist = Math.min(45, Math.hypot(dx, dy));
-        const angle = Math.atan2(dy, dx);
-        joystickStick.style.left = `${35 + Math.cos(angle) * dist}px`;
-        joystickStick.style.top = `${35 + Math.sin(angle) * dist}px`;
-        moveInput.x = (Math.cos(angle) * dist) / 45;
-        moveInput.y = (Math.sin(angle) * dist) / 45;
-      }
-
-      window.actionPunch = function() {
-        if (isPaused || punchTimer !== 0) return;
-        punchTimer = 18;
-        npcs.forEach(npc => {
-          const dist = Math.hypot(playerGroup.position.x - npc.mesh.position.x, playerGroup.position.z - npc.mesh.position.z);
-          if (dist < 6) {
-            npc.hitTimer = 25;
-            playerState.coins += 15;
-            updateUI();
-          }
-        });
-      };
-
-      window.actionJump = function() {
-        if (!isPaused && isGrounded) {
-          velocityY = jumpPower;
-          isGrounded = false;
-        }
-      };
-
-      window.actionAttack = function() { actionPunch(); };
-      window.actionBuild = function() {
-        if (isPaused || playerState.coins < 50) return;
-        playerState.coins -= 50;
-        const tower = new THREE.Mesh(new THREE.CylinderGeometry(3, 4, 10, 8), new THREE.MeshStandardMaterial({ color: 0x16a34a }));
-        tower.position.copy(playerGroup.position);
-        tower.position.y = 5;
-        scene.add(tower);
-        updateUI();
-      };
-      window.actionEvolve = function() {
-        if (isPaused || playerState.evoIdx >= EVOLUTIONS.length - 1) return;
-        const cost = (playerState.evoIdx + 1) * 100;
-        if (playerState.coins < cost) return;
-        playerState.coins -= cost;
-        playerState.evoIdx++;
-        playerFurMat.map = generateFurTexture(EVOLUTIONS[playerState.evoIdx].color);
-        playerGroup.scale.multiplyScalar(1.1);
-        updateUI();
-      };
-
-      function updateUI() {
-        document.getElementById('player-coins').innerText = playerState.coins;
-        document.getElementById('player-evo').innerText = EVOLUTIONS[playerState.evoIdx].name;
-      }
-
-      function checkCollision(x, z) {
-        for (let b of buildingColliders) {
-          if (x > b.minX && x < b.maxX && z > b.minZ && z < b.maxZ) return true;
-        }
-        return false;
-      }
-
-      // --- DISEGNO MINI MAPPA ---
-      const minimapCanvas = document.getElementById('minimap-canvas');
-      const minimapCtx = minimapCanvas.getContext('2d');
-
-      function drawMiniMap() {
-        minimapCtx.clearRect(0, 0, 110, 110);
-        minimapCtx.fillStyle = '#0f172a';
-        minimapCtx.fillRect(0, 0, 110, 110);
-
-        const mapScale = 0.12;
-        const centerX = 55;
-        const centerY = 55;
-
-        // Disegna Quartieri sulla mini mappa
-        DISTRICTS.forEach(d => {
-          const dx = centerX + (d.x - playerGroup.position.x) * mapScale;
-          const dz = centerY + (d.z - playerGroup.position.z) * mapScale;
-          minimapCtx.fillStyle = d.color;
-          minimapCtx.beginPath();
-          minimapCtx.arc(dx, dz, d.radius * mapScale, 0, Math.PI * 2);
-          minimapCtx.fill();
-        });
-
-        // Disegna Edifici
-        minimapCtx.fillStyle = '#64748b';
-        buildingPositions.forEach(b => {
-          const bx = centerX + (b.x - playerGroup.position.x) * mapScale;
-          const bz = centerY + (b.z - playerGroup.position.z) * mapScale;
-          minimapCtx.fillRect(bx - 2, bz - 2, 4, 4);
-        });
-
-        // Disegna Giocatore al centro della mini mappa
-        minimapCtx.fillStyle = '#f59e0b';
-        minimapCtx.beginPath();
-        minimapCtx.arc(centerX, centerY, 4, 0, Math.PI * 2);
-        minimapCtx.fill();
-        minimapCtx.strokeStyle = '#fff';
-        minimapCtx.lineWidth = 1.5;
-        minimapCtx.stroke();
-      }
-
-      // --- LOOP DI GIOCO ---
-      function animate() {
-        requestAnimationFrame(animate);
-
-        if (!isPaused) {
-          let kX = 0, kY = 0;
-          if (keys['KeyW'] || keys['ArrowUp']) kY -= 1;
-          if (keys['KeyS'] || keys['ArrowDown']) kY += 1;
-          if (keys['KeyA'] || keys['ArrowLeft']) kX -= 1;
-          if (keys['KeyD'] || keys['ArrowRight']) kX += 1;
-
-          const rawMx = moveInput.x || kX;
-          const rawMy = moveInput.y || kY;
-          const isMoving = Math.hypot(rawMx, rawMy) > 0.1;
-
-          if (isMoving) {
-            const mx = rawMx * Math.cos(cameraYaw) + rawMy * Math.sin(cameraYaw);
-            const mz = -rawMx * Math.sin(cameraYaw) + rawMy * Math.cos(cameraYaw);
-
-            const speed = EVOLUTIONS[playerState.evoIdx].speed;
-            const nextX = playerGroup.position.x + mx * speed;
-            const nextZ = playerGroup.position.z + mz * speed;
-
-            if (!checkCollision(nextX, playerGroup.position.z)) playerGroup.position.x = nextX;
-            if (!checkCollision(playerGroup.position.x, nextZ)) playerGroup.position.z = nextZ;
-
-            playerAngle = Math.atan2(mx, mz);
-            playerGroup.rotation.y = playerAngle;
-
-            // Animazione Camminata (Braccia e Gambe)
-            if (isGrounded && punchTimer === 0) {
-              walkAnimTime += 0.2;
-              leftLeg.rotation.x = Math.sin(walkAnimTime) * 0.6;
-              rightLeg.rotation.x = -Math.sin(walkAnimTime) * 0.6;
-              leftArm.rotation.x = -Math.sin(walkAnimTime) * 0.6;
-              rightArm.rotation.x = Math.sin(walkAnimTime) * 0.6;
-            }
-          } else if (isGrounded && punchTimer === 0) {
-            leftLeg.rotation.x = 0; rightLeg.rotation.x = 0;
-            leftArm.rotation.x = 0; rightArm.rotation.x = 0;
-          }
-
-          if (punchTimer > 0) {
-            punchTimer--;
-            rightArm.rotation.x = -Math.PI / 2;
-          } else if (!isMoving) {
-            rightArm.rotation.x = 0;
-          }
-
-          if (!isGrounded || velocityY !== 0) {
-            playerGroup.position.y += velocityY;
-            velocityY += gravity;
-            if (playerGroup.position.y <= 0) {
-              playerGroup.position.y = 0;
-              velocityY = 0;
-              isGrounded = true;
-            }
-          }
-
-          npcs.forEach(npc => updateNPC_AI(npc));
-        }
-
-        // Nel menu principale la telecamera ruota dolcemente
-        if (!gameStarted) {
-          cameraYaw += 0.003;
-        }
-
-        const camDist = 22;
-        const camHeight = 11;
-        camera.position.x = playerGroup.position.x - Math.sin(cameraYaw) * camDist;
-        camera.position.z = playerGroup.position.z - Math.cos(cameraYaw) * camDist;
-        camera.position.y = playerGroup.position.y + camHeight;
-        camera.lookAt(playerGroup.position.x, playerGroup.position.y + 3.5, playerGroup.position.z);
-
-        let activeDistrict = 'Matrice (Centro)';
-        DISTRICTS.forEach(d => {
-          const dist = Math.hypot(playerGroup.position.x - d.x, playerGroup.position.z - d.z);
-          if (dist < d.radius) activeDistrict = d.name;
-        });
-        document.getElementById('current-district').innerText = activeDistrict;
-
-        if (gameStarted && !isPaused) {
-          drawMiniMap();
-        }
-
-        renderer.render(scene, camera);
-      }
-
-      window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-      });
-
-      animate();
-    });
-  </script>
-</body>
-</html>
+      
