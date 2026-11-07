@@ -8,13 +8,13 @@
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; touch-action: none; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background-color: #87CEEB;
+      background-color: #111827;
       color: #fff;
       overflow: hidden;
       width: 100vw;
       height: 100vh;
     }
-    #game-canvas { width: 100%; height: 100%; display: block; }
+    #game-canvas { width: 100%; height: 100%; display: block; position: absolute; top: 0; left: 0; z-index: 1; }
     
     .ui-layer {
       position: absolute;
@@ -24,6 +24,7 @@
       flex-direction: column;
       justify-content: space-between;
       padding: 16px;
+      z-index: 10;
     }
     .interactive { pointer-events: auto; }
 
@@ -86,3 +87,428 @@
     .btn-action {
       width: 55px; height: 55px;
       border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.4);
+      background: rgba(0, 0, 0, 0.75);
+      color: white;
+      font-size: 1.2rem;
+      display: flex; justify-content: center; align-items: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+    }
+    .btn-action:active { transform: scale(0.9); }
+    .btn-punch { background: #dc2626; font-size: 1.4rem; }
+    .btn-bld { background: #16a34a; }
+    .btn-jmp { background: #eab308; }
+  </style>
+</head>
+<body>
+
+  <canvas id="game-canvas"></canvas>
+
+  <div class="ui-layer">
+    <div class="top-bar">
+      <div class="hud-box">🐾 <span id="player-evo">Cane Randagio</span> | 🪙 <span class="gold" id="player-coins">150</span></div>
+      <div class="district-hud" id="current-district">Matrice</div>
+    </div>
+
+    <div class="controls-panel">
+      <div class="touch-joystick interactive" id="joystick-zone">
+        <div class="joystick-stick" id="joystick-stick"></div>
+      </div>
+      <div class="action-grid interactive">
+        <button class="btn-action btn-punch" onclick="actionPunch()">🥊</button>
+        <button class="btn-action btn-jmp" onclick="actionJump()">🦘</button>
+        <button class="btn-action btn-bld" onclick="actionBuild()">🏗️</button>
+        <button class="btn-action" style="background:#8b5cf6;" onclick="actionEvolve()">✨</button>
+        <button class="btn-action" style="background:#2563eb;" onclick="actionAttack()">⚡</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    window.addEventListener('load', () => {
+      const canvas = document.getElementById('game-canvas');
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x87CEEB);
+
+      const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.shadowMap.enabled = true;
+
+      // Luci stabili e forti per evitare ombre nere o schermate vuote
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+      scene.add(ambientLight);
+
+      const sunLight = new THREE.DirectionalLight(0xffffff, 1.0);
+      sunLight.position.set(100, 300, 200);
+      scene.add(sunLight);
+
+      // Terreno semplice e sicuro (colore solido senza dipendere da canvas 2D esterni)
+      const groundGeo = new THREE.PlaneGeometry(1000, 1000);
+      const groundMat = new THREE.MeshStandardMaterial({ color: 0x3f3f46, roughness: 0.9 });
+      const ground = new THREE.Mesh(groundGeo, groundMat);
+      ground.rotation.x = -Math.PI / 2;
+      ground.receiveShadow = true;
+      scene.add(ground);
+
+      const DISTRICTS = [
+        { name: 'Matrice', x: 0, z: -120, radius: 80 },
+        { name: 'San Giovanni', x: -180, z: -50, radius: 75 },
+        { name: 'Badune', x: 180, z: -50, radius: 75 },
+        { name: 'Pizzumulu', x: 0, z: 40, radius: 70 },
+        { name: 'Balatazza', x: 190, z: 140, radius: 70 },
+        { name: 'Priolo', x: -190, z: 130, radius: 70 },
+        { name: 'Vigna', x: -90, z: 230, radius: 75 },
+        { name: 'Santuzzo', x: 100, z: 230, radius: 75 }
+      ];
+
+      const buildingColliders = [];
+      const buildingMat = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.5 });
+
+      DISTRICTS.forEach(d => {
+        for (let i = 0; i < 6; i++) {
+          const angle = (i / 6) * Math.PI * 2;
+          const dist = 25 + Math.random() * (d.radius - 35);
+          const w = 14 + Math.random() * 6;
+          const h = 20 + Math.random() * 25;
+          const l = 14 + Math.random() * 6;
+
+          const bGeo = new THREE.BoxGeometry(w, h, l);
+          const building = new THREE.Mesh(bGeo, buildingMat);
+
+          const posX = d.x + Math.cos(angle) * dist;
+          const posZ = d.z + Math.sin(angle) * dist;
+
+          building.position.set(posX, h / 2, posZ);
+          building.castShadow = true;
+          building.receiveShadow = true;
+          scene.add(building);
+
+          buildingColliders.push({
+            minX: posX - w / 2 - 1.2,
+            maxX: posX + w / 2 + 1.2,
+            minZ: posZ - l / 2 - 1.2,
+            maxZ: posZ + l / 2 + 1.2
+          });
+        }
+      });
+
+      // --- GIOCATORE SPAWN SICURO AL CENTRO (0,0) ---
+      const playerGroup = new THREE.Group();
+      playerGroup.position.set(0, 0, 0);
+      const bodyMat = new THREE.MeshStandardMaterial({ color: 0xd97706, roughness: 0.5 });
+
+      const torso = new THREE.Mesh(new THREE.BoxGeometry(2, 3, 1.2), bodyMat);
+      torso.position.y = 3; torso.castShadow = true; playerGroup.add(torso);
+
+      const head = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.5, 1.5), bodyMat);
+      head.position.y = 5.25; head.castShadow = true; playerGroup.add(head);
+
+      const snout = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.6, 0.8), new THREE.MeshStandardMaterial({ color: 0x111111 }));
+      snout.position.set(0, 5, 0.9); playerGroup.add(snout);
+
+      const armGeo = new THREE.BoxGeometry(0.7, 2.5, 0.7);
+      const leftArm = new THREE.Mesh(armGeo, bodyMat); leftArm.position.set(-1.4, 3, 0); leftArm.castShadow = true; playerGroup.add(leftArm);
+      const rightArm = new THREE.Mesh(armGeo, bodyMat); rightArm.position.set(1.4, 3, 0); rightArm.castShadow = true; playerGroup.add(rightArm);
+
+      const legGeo = new THREE.BoxGeometry(0.8, 2.5, 0.8);
+      const leftLeg = new THREE.Mesh(legGeo, bodyMat); leftLeg.position.set(-0.6, 1.25, 0); leftLeg.castShadow = true; playerGroup.add(leftLeg);
+      const rightLeg = new THREE.Mesh(legGeo, bodyMat); rightLeg.position.set(0.6, 1.25, 0); rightLeg.castShadow = true; playerGroup.add(rightLeg);
+
+      scene.add(playerGroup);
+
+      // --- NPC ---
+      function createHumanNPCMesh() {
+        const group = new THREE.Group();
+        const skinMat = new THREE.MeshStandardMaterial({ color: 0xffdbac });
+        const shirtMat = new THREE.MeshStandardMaterial({ color: 0x2563eb });
+        const pantsMat = new THREE.MeshStandardMaterial({ color: 0x1f2937 });
+
+        const t = new THREE.Mesh(new THREE.BoxGeometry(1.8, 2.8, 1), shirtMat);
+        t.position.y = 3; t.castShadow = true; group.add(t);
+        const h = new THREE.Mesh(new THREE.SphereGeometry(0.8, 8, 8), skinMat);
+        h.position.y = 5; h.castShadow = true; group.add(h);
+
+        return { mesh: group };
+      }
+
+      const npcs = [];
+      for (let i = 0; i < 5; i++) {
+        const data = createHumanNPCMesh();
+        const rx = (Math.random() - 0.5) * 200;
+        const rz = (Math.random() - 0.5) * 200;
+        data.mesh.position.set(rx, 0, rz);
+        scene.add(data.mesh);
+        npcs.push({ mesh: data.mesh, targetX: rx, targetZ: rz, speed: 0.5, timer: 0, hitTimer: 0 });
+      }
+
+      function updateNPC_AI(npc) {
+        if (npc.hitTimer > 0) {
+          npc.hitTimer--;
+          npc.mesh.rotation.z = Math.sin(npc.hitTimer * 0.5) * 0.4;
+          return;
+        } else {
+          npc.mesh.rotation.z = 0;
+        }
+
+        npc.timer--;
+        if (npc.timer <= 0) {
+          npc.timer = 120 + Math.floor(Math.random() * 100);
+          npc.targetX = npc.mesh.position.x + (Math.random() - 0.5) * 80;
+          npc.targetZ = npc.mesh.position.z + (Math.random() - 0.5) * 80;
+        }
+
+        const dx = npc.targetX - npc.mesh.position.x;
+        const dz = npc.targetZ - npc.mesh.position.z;
+        const dist = Math.hypot(dx, dz);
+
+        if (dist > 2) {
+          npc.mesh.position.x += (dx / dist) * npc.speed;
+          npc.mesh.position.z += (dz / dist) * npc.speed;
+          npc.mesh.rotation.y = Math.atan2(dx, dz);
+        }
+      }
+
+      // --- COMANDI E TELECAMERA ---
+      let cameraYaw = 0;
+      let isCameraDragging = false;
+      let cameraTouchId = null;
+      let lastTouchX = 0;
+      const cameraSensitivity = 0.003;
+
+      let velocityY = 0;
+      let isGrounded = true;
+      let punchTimer = 0;
+      const gravity = -0.018;
+      const jumpPower = 0.48;
+
+      const EVOLUTIONS = [
+        { name: 'Cane Randagio', speed: 0.9, color: 0xd97706 },
+        { name: 'Lupo Guerriero', speed: 1.2, color: 0x475569 },
+        { name: 'Pantera d\'Assalto', speed: 1.5, color: 0x1e1b4b },
+        { name: 'Leone Titano', speed: 1.8, color: 0xeab308 }
+      ];
+      let playerState = { evoIdx: 0, coins: 150 };
+
+      let moveInput = { x: 0, y: 0 };
+      let playerAngle = 0;
+      const keys = {};
+
+      window.addEventListener('keydown', e => {
+        keys[e.code] = true;
+        if (e.code === 'Space') actionJump();
+        if (e.code === 'KeyF') actionPunch();
+      });
+      window.addEventListener('keyup', e => keys[e.code] = false);
+
+      // Touch Rotazione Telecamera
+      window.addEventListener('touchstart', e => {
+        for (let t of e.changedTouches) {
+          if (!e.target.closest('.interactive') && cameraTouchId === null) {
+            cameraTouchId = t.identifier;
+            lastTouchX = t.clientX;
+          }
+        }
+      });
+      window.addEventListener('touchmove', e => {
+        for (let t of e.changedTouches) {
+          if (t.identifier === cameraTouchId) {
+            const dx = t.clientX - lastTouchX;
+            cameraYaw -= dx * cameraSensitivity;
+            lastTouchX = t.clientX;
+          }
+        }
+      });
+      window.addEventListener('touchend', e => {
+        for (let t of e.changedTouches) {
+          if (t.identifier === cameraTouchId) cameraTouchId = null;
+        }
+      });
+
+      window.addEventListener('mousedown', e => {
+        if (!e.target.closest('.interactive')) {
+          isCameraDragging = true;
+          lastTouchX = e.clientX;
+        }
+      });
+      window.addEventListener('mousemove', e => {
+        if (isCameraDragging) {
+          const dx = e.clientX - lastTouchX;
+          cameraYaw -= dx * cameraSensitivity;
+          lastTouchX = e.clientX;
+        }
+      });
+      window.addEventListener('mouseup', () => isCameraDragging = false);
+
+      // Joystick Movimento
+      const joystickZone = document.getElementById('joystick-zone');
+      const joystickStick = document.getElementById('joystick-stick');
+      let joystickTouchId = null;
+
+      joystickZone.addEventListener('touchstart', e => {
+        e.stopPropagation();
+        const t = e.changedTouches[0];
+        joystickTouchId = t.identifier;
+        updateJoystick(t);
+      });
+      window.addEventListener('touchmove', e => {
+        for (let t of e.changedTouches) {
+          if (t.identifier === joystickTouchId) updateJoystick(t);
+        }
+      });
+      window.addEventListener('touchend', e => {
+        for (let t of e.changedTouches) {
+          if (t.identifier === joystickTouchId) {
+            joystickTouchId = null;
+            moveInput = { x: 0, y: 0 };
+            joystickStick.style.top = '35px';
+            joystickStick.style.left = '35px';
+          }
+        }
+      });
+
+      function updateJoystick(t) {
+        const rect = joystickZone.getBoundingClientRect();
+        const dx = t.clientX - (rect.left + rect.width / 2);
+        const dy = t.clientY - (rect.top + rect.height / 2);
+        const dist = Math.min(45, Math.hypot(dx, dy));
+        const angle = Math.atan2(dy, dx);
+        joystickStick.style.left = `${35 + Math.cos(angle) * dist}px`;
+        joystickStick.style.top = `${35 + Math.sin(angle) * dist}px`;
+        moveInput.x = (Math.cos(angle) * dist) / 45;
+        moveInput.y = (Math.sin(angle) * dist) / 45;
+      }
+
+      window.actionPunch = function() {
+        if (punchTimer === 0) {
+          punchTimer = 18;
+          npcs.forEach(npc => {
+            const dist = Math.hypot(playerGroup.position.x - npc.mesh.position.x, playerGroup.position.z - npc.mesh.position.z);
+            if (dist < 6) {
+              npc.hitTimer = 25;
+              playerState.coins += 15;
+              updateUI();
+            }
+          });
+        }
+      };
+
+      window.actionJump = function() {
+        if (isGrounded) {
+          velocityY = jumpPower;
+          isGrounded = false;
+        }
+      };
+
+      window.actionAttack = function() { actionPunch(); };
+      window.actionBuild = function() {
+        if (playerState.coins < 50) return;
+        playerState.coins -= 50;
+        const tower = new THREE.Mesh(new THREE.CylinderGeometry(3, 4, 10, 8), new THREE.MeshStandardMaterial({ color: 0x16a34a }));
+        tower.position.copy(playerGroup.position);
+        tower.position.y = 5;
+        scene.add(tower);
+        updateUI();
+      };
+      window.actionEvolve = function() {
+        if (playerState.evoIdx >= EVOLUTIONS.length - 1) return;
+        const cost = (playerState.evoIdx + 1) * 100;
+        if (playerState.coins < cost) return;
+        playerState.coins -= cost;
+        playerState.evoIdx++;
+        bodyMat.color.setHex(EVOLUTIONS[playerState.evoIdx].color);
+        playerGroup.scale.multiplyScalar(1.1);
+        updateUI();
+      };
+
+      function updateUI() {
+        document.getElementById('player-coins').innerText = playerState.coins;
+        document.getElementById('player-evo').innerText = EVOLUTIONS[playerState.evoIdx].name;
+      }
+
+      function checkCollision(x, z) {
+        for (let b of buildingColliders) {
+          if (x > b.minX && x < b.maxX && z > b.minZ && z < b.maxZ) return true;
+        }
+        return false;
+      }
+
+      // --- GAME LOOP ---
+      function animate() {
+        requestAnimationFrame(animate);
+
+        let kX = 0, kY = 0;
+        if (keys['KeyW'] || keys['ArrowUp']) kY -= 1;
+        if (keys['KeyS'] || keys['ArrowDown']) kY += 1;
+        if (keys['KeyA'] || keys['ArrowLeft']) kX -= 1;
+        if (keys['KeyD'] || keys['ArrowRight']) kX += 1;
+
+        const rawMx = moveInput.x || kX;
+        const rawMy = moveInput.y || kY;
+        const isMoving = Math.hypot(rawMx, rawMy) > 0.1;
+
+        if (isMoving) {
+          const mx = rawMx * Math.cos(cameraYaw) + rawMy * Math.sin(cameraYaw);
+          const mz = -rawMx * Math.sin(cameraYaw) + rawMy * Math.cos(cameraYaw);
+
+          const speed = EVOLUTIONS[playerState.evoIdx].speed;
+          const nextX = playerGroup.position.x + mx * speed;
+          const nextZ = playerGroup.position.z + mz * speed;
+
+          if (!checkCollision(nextX, playerGroup.position.z)) playerGroup.position.x = nextX;
+          if (!checkCollision(playerGroup.position.x, nextZ)) playerGroup.position.z = nextZ;
+
+          playerAngle = Math.atan2(mx, mz);
+          playerGroup.rotation.y = playerAngle;
+        }
+
+        if (punchTimer > 0) {
+          punchTimer--;
+          rightArm.rotation.x = -Math.PI / 2;
+        } else {
+          rightArm.rotation.x = 0;
+        }
+
+        if (!isGrounded || velocityY !== 0) {
+          playerGroup.position.y += velocityY;
+          velocityY += gravity;
+          if (playerGroup.position.y <= 0) {
+            playerGroup.position.y = 0;
+            velocityY = 0;
+            isGrounded = true;
+          }
+        }
+
+        npcs.forEach(npc => updateNPC_AI(npc));
+
+        // Telecamera GTA in terza persona
+        const camDist = 22;
+        const camHeight = 11;
+        camera.position.x = playerGroup.position.x - Math.sin(cameraYaw) * camDist;
+        camera.position.z = playerGroup.position.z - Math.cos(cameraYaw) * camDist;
+        camera.position.y = playerGroup.position.y + camHeight;
+        camera.lookAt(playerGroup.position.x, playerGroup.position.y + 3.5, playerGroup.position.z);
+
+        let activeDistrict = 'Matrice (Centro)';
+        DISTRICTS.forEach(d => {
+          const dist = Math.hypot(playerGroup.position.x - d.x, playerGroup.position.z - d.z);
+          if (dist < d.radius) activeDistrict = d.name;
+        });
+        document.getElementById('current-district').innerText = activeDistrict;
+
+        renderer.render(scene, camera);
+      }
+
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      animate();
+    });
+  </script>
+</body>
+</html>
