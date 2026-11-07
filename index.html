@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Canicattini Bagni 3D - Vehicles, Shop & Local Easter Eggs</title>
+  <title>Canicattini Bagni 3D - Ultimate Edition</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; touch-action: none; }
     html, body {
@@ -81,3 +81,140 @@
       display: flex;
       flex-direction: column;
       justify-content: center;
+      align-items: center;
+      gap: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    #shop-menu.visible { opacity: 1; pointer-events: auto; }
+    .shop-container {
+      background: rgba(15, 23, 42, 0.95);
+      border: 2px solid rgba(245, 158, 11, 0.4);
+      border-radius: 20px;
+      padding: 24px;
+      width: 85%;
+      max-width: 360px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      align-items: center;
+    }
+    .shop-item {
+      width: 100%;
+      background: #1e293b;
+      border: 1px solid #334155;
+      padding: 12px;
+      border-radius: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .btn-buy {
+      background: #f59e0b;
+      color: #000;
+      font-weight: bold;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    /* --- BARRA RESISTENZA --- */
+    .stamina-container {
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 180px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      padding: 4px;
+      z-index: 20;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+    }
+    .stamina-label { font-size: 0.7rem; font-weight: bold; color: #94a3b8; margin-bottom: 2px; text-transform: uppercase; }
+    .stamina-bar-bg { width: 100%; height: 8px; background: #334155; border-radius: 4px; overflow: hidden; }
+    .stamina-bar-fill { width: 100%; height: 100%; background: #3b82f6; transition: width 0.1s linear; }
+
+    /* --- INTERFACCIA HUD --- */
+    .ui-layer {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 12px 24px;
+      z-index: 10;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+    .ui-layer.visible { opacity: 1; }
+    .interactive { pointer-events: auto; }
+
+    .top-bar { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+    .top-left-group { display: flex; gap: 12px; align-items: center; }
+    .hud-box {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 8px 14px;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      font-weight: bold;
+    }
+    .district-hud {
+      background: #dc2626;
+      color: white;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    #minimap {
+      width: 90px; height: 90px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      overflow: hidden;
+    }
+    #minimap-canvas { width: 100%; height: 100%; display: block; }
+
+    .btn-pause {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      display: flex; justify-content: center; align-items: center;
+      font-size: 1.1rem;
+    }
+
+    .controls-panel {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      width: 100%;
+      padding-bottom: 5px;
+    }
+    .touch-joystick {
+      width: 110px; height: 110px;
+      background: rgba(255, 255, 255, 0.15);
+      border: 2px solid rgba(255, 255, 255, 0.4);
+      border-radius: 50%;
+      position: relative;
+    }
+    .joystick-stick {
+      width: 45px; height: 45px;
+      background: #f59e0b;
+      border-radius: 50%;
+      position: absolute;
+      top: 32px; left: 32px;
+      box-shadow: 0 0 12px rgba(245, 158, 11, 0.8);
+    }
+    .action-grid { display: flex
