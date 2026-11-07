@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Canicattini Bagni 3D - Full HD Shader Edition</title>
+  <title>Canicattini Bagni 3D - Menu Principale & Full HD</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; touch-action: none; }
     body {
@@ -16,6 +16,77 @@
     }
     #game-canvas { width: 100%; height: 100%; display: block; position: absolute; top: 0; left: 0; z-index: 1; }
     
+    /* MENU PRINCIPALE OVERLAY */
+    #main-menu {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(135deg, rgba(11, 15, 25, 0.95), rgba(30, 41, 59, 0.9));
+      backdrop-filter: blur(12px);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 24px;
+      padding: 20px;
+      transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
+    #main-menu.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .menu-title {
+      font-size: 2.5rem;
+      font-weight: 900;
+      text-align: center;
+      background: linear-gradient(90deg, #f59e0b, #ef4444);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      text-shadow: 0 10px 20px rgba(0,0,0,0.5);
+    }
+    .menu-subtitle {
+      font-size: 1rem;
+      color: #94a3b8;
+      margin-top: -16px;
+      font-weight: 600;
+    }
+    .btn-play {
+      background: linear-gradient(90deg, #f59e0b, #d97706);
+      color: #fff;
+      border: none;
+      padding: 16px 48px;
+      font-size: 1.5rem;
+      font-weight: 900;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 0 25px rgba(245, 158, 11, 0.5);
+      transition: transform 0.2s, box-shadow 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .btn-play:active {
+      transform: scale(0.95);
+      box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
+    }
+    .controls-info {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 16px;
+      border-radius: 12px;
+      max-width: 320px;
+      font-size: 0.85rem;
+      color: #cbd5e1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .controls-info div { display: flex; justify-content: space-between; }
+    .controls-info span { font-weight: bold; color: #f59e0b; }
+
+    /* UI IN GIOCO OVERLAY */
     .ui-layer {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -25,7 +96,10 @@
       justify-content: space-between;
       padding: 16px;
       z-index: 10;
+      opacity: 0;
+      transition: opacity 0.5s ease;
     }
+    .ui-layer.visible { opacity: 1; }
     .interactive { pointer-events: auto; }
 
     .top-bar {
@@ -102,539 +176,28 @@
 </head>
 <body>
 
+  <!-- MENU PRINCIPALE -->
+  <div id="main-menu" class="interactive">
+    <div class="menu-title">PET WARS 3D</div>
+    <div class="menu-subtitle">La Conquista di Canicattini Bagni</div>
+    <button class="btn-play" onclick="startGame()">GIOCA</button>
+    <div class="controls-info">
+      <div><span>Joystick / WASD</span> Muovi Personaggio</div>
+      <div><span>Trascina Schermo</span> Ruota Telecamera</div>
+      <div><span>🥊 / Tasto F</span> Pugno / Attacco</div>
+      <div><span>🦘 / Spazio</span> Salto Fisico</div>
+      <div><span>✨</span> Evoluzione Animale</div>
+    </div>
+  </div>
+
   <canvas id="game-canvas"></canvas>
 
-  <div class="ui-layer">
+  <!-- INTERFACCIA HUD IN GIOCO -->
+  <div class="ui-layer" id="game-ui">
     <div class="top-bar">
       <div class="hud-box">🐾 <span id="player-evo">Cane Randagio</span> | 🪙 <span class="gold" id="player-coins">150</span></div>
       <div class="district-hud" id="current-district">Matrice</div>
     </div>
 
     <div class="controls-panel">
-      <div class="touch-joystick interactive" id="joystick-zone">
-        <div class="joystick-stick" id="joystick-stick"></div>
-      </div>
-      <div class="action-grid interactive">
-        <button class="btn-action btn-punch" onclick="actionPunch()">🥊</button>
-        <button class="btn-action btn-jmp" onclick="actionJump()">🦘</button>
-        <button class="btn-action btn-bld" onclick="actionBuild()">🏗️</button>
-        <button class="btn-action" style="background:#8b5cf6;" onclick="actionEvolve()">✨</button>
-        <button class="btn-action" style="background:#2563eb;" onclick="actionAttack()">⚡</button>
-      </div>
-    </div>
-  </div>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script>
-    window.addEventListener('load', () => {
-      // --- GENERAZIONE TEXTURE HD IN MEMORIA ---
-      function generateAsphaltTexture() {
-        const c = document.createElement('canvas');
-        c.width = 512; c.height = 512;
-        const ctx = c.getContext('2d');
-        ctx.fillStyle = '#22252c';
-        ctx.fillRect(0, 0, 512, 512);
-
-        // Grana Asfalto
-        for (let i = 0; i < 8000; i++) {
-          const val = Math.random() * 40;
-          ctx.fillStyle = `rgba(${100+val},${100+val},${100+val},0.08)`;
-          ctx.fillRect(Math.random() * 512, Math.random() * 512, 2, 2);
-        }
-
-        // Strisce stradali e segnaletica
-        ctx.strokeStyle = '#f59e0b';
-        ctx.lineWidth = 10;
-        ctx.setLineDash([40, 40]);
-        ctx.beginPath();
-        ctx.moveTo(256, 0); ctx.lineTo(256, 512);
-        ctx.stroke();
-
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 6;
-        ctx.setLineDash([]);
-        ctx.strokeRect(10, 10, 492, 492);
-
-        const tex = new THREE.CanvasTexture(c);
-        tex.wrapS = THREE.RepeatWrapping;
-        tex.wrapT = THREE.RepeatWrapping;
-        tex.repeat.set(25, 25);
-        return tex;
-      }
-
-      function generateBuildingTexture(wallColor, windowColor) {
-        const c = document.createElement('canvas');
-        c.width = 256; c.height = 256;
-        const ctx = c.getContext('2d');
-        ctx.fillStyle = wallColor;
-        ctx.fillRect(0, 0, 256, 256);
-
-        // Texture Mattoni / Intonaco
-        for (let y = 0; y < 256; y += 16) {
-          ctx.strokeStyle = 'rgba(0,0,0,0.15)';
-          ctx.lineWidth = 1;
-          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(256, y); ctx.stroke();
-        }
-
-        // Finestre illuminate
-        ctx.fillStyle = windowColor;
-        for (let y = 20; y < 240; y += 40) {
-          for (let x = 20; x < 240; x += 35) {
-            ctx.fillRect(x, y, 18, 24);
-            ctx.fillStyle = 'rgba(255,255,255,0.4)';
-            ctx.fillRect(x + 2, y + 2, 6, 10);
-            ctx.fillStyle = windowColor;
-          }
-        }
-
-        const tex = new THREE.CanvasTexture(c);
-        tex.wrapS = THREE.RepeatWrapping;
-        tex.wrapT = THREE.RepeatWrapping;
-        return tex;
-      }
-
-      function generateFurTexture(colorHex) {
-        const c = document.createElement('canvas');
-        c.width = 128; c.height = 128;
-        const ctx = c.getContext('2d');
-        ctx.fillStyle = colorHex;
-        ctx.fillRect(0, 0, 128, 128);
-        for (let i = 0; i < 2000; i++) {
-          ctx.fillStyle = 'rgba(0,0,0,0.1)';
-          ctx.fillRect(Math.random() * 128, Math.random() * 128, 1, 4);
-        }
-        return new THREE.CanvasTexture(c);
-      }
-
-      // --- ENGINE 3D & SHADER SKY ---
-      const canvas = document.getElementById('game-canvas');
-      const scene = new THREE.Scene();
-
-      // Shader per Cielo Gradiente HD
-      const vertexShader = `
-        varying vec3 vWorldPosition;
-        void main() {
-          vec4 worldPosition = modelMatrix * vec4(position, 1.0);
-          vWorldPosition = worldPosition.xyz;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `;
-      const fragmentShader = `
-        varying vec3 vWorldPosition;
-        void main() {
-          float h = normalize(vWorldPosition).y;
-          gl_FragColor = mix(vec4(0.9, 0.95, 1.0, 1.0), vec4(0.2, 0.5, 0.85, 1.0), max(0.0, h));
-        }
-      `;
-      const skyGeo = new THREE.SphereGeometry(600, 32, 15);
-      const skyMat = new THREE.ShaderMaterial({ vertexShader, fragmentShader, side: THREE.BackSide });
-      const sky = new THREE.Mesh(skyGeo, skyMat);
-      scene.add(sky);
-
-      const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-      renderer.shadowMap.enabled = true;
-      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
-      // ILLUMINAZIONE
-      const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
-      scene.add(ambientLight);
-
-      const sunLight = new THREE.DirectionalLight(0xfffaed, 1.3);
-      sunLight.position.set(150, 300, 150);
-      sunLight.castShadow = true;
-      sunLight.shadow.mapSize.width = 1024;
-      sunLight.shadow.mapSize.height = 1024;
-      scene.add(sunLight);
-
-      // TERRENO ASFALTO HD
-      const groundGeo = new THREE.PlaneGeometry(1200, 1200);
-      const groundMat = new THREE.MeshStandardMaterial({
-        map: generateAsphaltTexture(),
-        roughness: 0.8
-      });
-      const ground = new THREE.Mesh(groundGeo, groundMat);
-      ground.rotation.x = -Math.PI / 2;
-      ground.receiveShadow = true;
-      scene.add(ground);
-
-      // QUARTIERI E PALAZZI CON TEXTURE
-      const DISTRICTS = [
-        { name: 'Matrice', x: 0, z: -130, radius: 85 },
-        { name: 'San Giovanni', x: -190, z: -50, radius: 80 },
-        { name: 'Badune', x: 190, z: -50, radius: 80 },
-        { name: 'Pizzumulu', x: 0, z: 40, radius: 75 },
-        { name: 'Balatazza', x: 200, z: 150, radius: 75 },
-        { name: 'Priolo', x: -200, z: 140, radius: 75 },
-        { name: 'Vigna', x: -90, z: 240, radius: 80 },
-        { name: 'Santuzzo', x: 100, z: 240, radius: 80 }
-      ];
-
-      const bTex1 = generateBuildingTexture('#d4a373', '#fefae0');
-      const bTex2 = generateBuildingTexture('#778da9', '#e0e1dd');
-      const buildingColliders = [];
-
-      DISTRICTS.forEach(d => {
-        for (let i = 0; i < 7; i++) {
-          const angle = (i / 7) * Math.PI * 2;
-          const dist = 32 + Math.random() * (d.radius - 42);
-          const w = 16 + Math.random() * 8;
-          const h = 24 + Math.random() * 28;
-          const l = 16 + Math.random() * 8;
-
-          const bGeo = new THREE.BoxGeometry(w, h, l);
-          const tex = i % 2 === 0 ? bTex1.clone() : bTex2.clone();
-          tex.repeat.set(1, Math.floor(h / 10));
-
-          const bMat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.5 });
-          const building = new THREE.Mesh(bGeo, bMat);
-
-          const posX = d.x + Math.cos(angle) * dist;
-          const posZ = d.z + Math.sin(angle) * dist;
-
-          building.position.set(posX, h / 2, posZ);
-          building.castShadow = true;
-          building.receiveShadow = true;
-          scene.add(building);
-
-          buildingColliders.push({
-            minX: posX - w / 2 - 1.5,
-            maxX: posX + w / 2 + 1.5,
-            minZ: posZ - l / 2 - 1.5,
-            maxZ: posZ + l / 2 + 1.5
-          });
-        }
-      });
-
-      // --- AVATAR GIOCATORE HD DETTAGLIATO ---
-      const playerGroup = new THREE.Group();
-      playerGroup.position.set(0, 0, 0);
-
-      const playerFurMat = new THREE.MeshStandardMaterial({ map: generateFurTexture('#d97706'), roughness: 0.6 });
-
-      // Torso
-      const torso = new THREE.Mesh(new THREE.BoxGeometry(2.2, 3, 1.3), playerFurMat);
-      torso.position.y = 3; torso.castShadow = true; playerGroup.add(torso);
-
-      // Testa & Dettagli Muso
-      const head = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.6, 1.6), playerFurMat);
-      head.position.y = 5.3; head.castShadow = true; playerGroup.add(head);
-
-      const snout = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.7, 0.9), new THREE.MeshStandardMaterial({ color: 0x1e1e1e }));
-      snout.position.set(0, 5.1, 1); playerGroup.add(snout);
-
-      // Occhi
-      const eyeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-      const pupilMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
-      const leftEye = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 0.1), eyeMat);
-      leftEye.position.set(-0.4, 5.5, 0.82); playerGroup.add(leftEye);
-      const rightEye = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 0.1), eyeMat);
-      rightEye.position.set(0.4, 5.5, 0.82); playerGroup.add(rightEye);
-
-      // Braccia e Gambe
-      const armGeo = new THREE.BoxGeometry(0.7, 2.5, 0.7);
-      const leftArm = new THREE.Mesh(armGeo, playerFurMat); leftArm.position.set(-1.5, 3, 0); leftArm.castShadow = true; playerGroup.add(leftArm);
-      const rightArm = new THREE.Mesh(armGeo, playerFurMat); rightArm.position.set(1.5, 3, 0); rightArm.castShadow = true; playerGroup.add(rightArm);
-
-      const legGeo = new THREE.BoxGeometry(0.8, 2.5, 0.8);
-      const leftLeg = new THREE.Mesh(legGeo, playerFurMat); leftLeg.position.set(-0.6, 1.25, 0); leftLeg.castShadow = true; playerGroup.add(leftLeg);
-      const rightLeg = new THREE.Mesh(legGeo, playerFurMat); rightLeg.position.set(0.6, 1.25, 0); rightLeg.castShadow = true; playerGroup.add(rightLeg);
-
-      scene.add(playerGroup);
-
-      // --- NPC UMANI E ANIMALI ---
-      function createHumanNPCMesh() {
-        const group = new THREE.Group();
-        const skinMat = new THREE.MeshStandardMaterial({ color: 0xffdbac });
-        const shirtMat = new THREE.MeshStandardMaterial({ color: 0x2563eb });
-        const pantsMat = new THREE.MeshStandardMaterial({ color: 0x1e293b });
-
-        const t = new THREE.Mesh(new THREE.BoxGeometry(1.8, 2.8, 1), shirtMat);
-        t.position.y = 3; t.castShadow = true; group.add(t);
-        const h = new THREE.Mesh(new THREE.SphereGeometry(0.8, 12, 12), skinMat);
-        h.position.y = 5; h.castShadow = true; group.add(h);
-
-        return { mesh: group };
-      }
-
-      const npcs = [];
-      for (let i = 0; i < 6; i++) {
-        const data = createHumanNPCMesh();
-        const rx = (Math.random() - 0.5) * 220;
-        const rz = (Math.random() - 0.5) * 220;
-        data.mesh.position.set(rx, 0, rz);
-        scene.add(data.mesh);
-        npcs.push({ mesh: data.mesh, targetX: rx, targetZ: rz, speed: 0.5, timer: 0, hitTimer: 0 });
-      }
-
-      function updateNPC_AI(npc) {
-        if (npc.hitTimer > 0) {
-          npc.hitTimer--;
-          npc.mesh.rotation.z = Math.sin(npc.hitTimer * 0.5) * 0.4;
-          return;
-        } else {
-          npc.mesh.rotation.z = 0;
-        }
-
-        npc.timer--;
-        if (npc.timer <= 0) {
-          npc.timer = 120 + Math.floor(Math.random() * 100);
-          npc.targetX = npc.mesh.position.x + (Math.random() - 0.5) * 80;
-          npc.targetZ = npc.mesh.position.z + (Math.random() - 0.5) * 80;
-        }
-
-        const dx = npc.targetX - npc.mesh.position.x;
-        const dz = npc.targetZ - npc.mesh.position.z;
-        const dist = Math.hypot(dx, dz);
-
-        if (dist > 2) {
-          npc.mesh.position.x += (dx / dist) * npc.speed;
-          npc.mesh.position.z += (dz / dist) * npc.speed;
-          npc.mesh.rotation.y = Math.atan2(dx, dz);
-        }
-      }
-
-      // --- CONTROLLI E TELECAMERA YAW FLUIDA ---
-      let cameraYaw = 0;
-      let isCameraDragging = false;
-      let cameraTouchId = null;
-      let lastTouchX = 0;
-      const cameraSensitivity = 0.003;
-
-      let velocityY = 0;
-      let isGrounded = true;
-      let punchTimer = 0;
-      const gravity = -0.018;
-      const jumpPower = 0.48;
-
-      const EVOLUTIONS = [
-        { name: 'Cane Randagio', speed: 0.9, color: '#d97706' },
-        { name: 'Lupo Guerriero', speed: 1.2, color: '#475569' },
-        { name: 'Pantera d\'Assalto', speed: 1.5, color: '#1e1b4b' },
-        { name: 'Leone Titano', speed: 1.8, color: '#eab308' }
-      ];
-      let playerState = { evoIdx: 0, coins: 150 };
-
-      let moveInput = { x: 0, y: 0 };
-      let playerAngle = 0;
-      const keys = {};
-
-      window.addEventListener('keydown', e => {
-        keys[e.code] = true;
-        if (e.code === 'Space') actionJump();
-        if (e.code === 'KeyF') actionPunch();
-      });
-      window.addEventListener('keyup', e => keys[e.code] = false);
-
-      // Touch Rotazione Telecamera
-      window.addEventListener('touchstart', e => {
-        for (let t of e.changedTouches) {
-          if (!e.target.closest('.interactive') && cameraTouchId === null) {
-            cameraTouchId = t.identifier;
-            lastTouchX = t.clientX;
-          }
-        }
-      });
-      window.addEventListener('touchmove', e => {
-        for (let t of e.changedTouches) {
-          if (t.identifier === cameraTouchId) {
-            const dx = t.clientX - lastTouchX;
-            cameraYaw -= dx * cameraSensitivity;
-            lastTouchX = t.clientX;
-          }
-        }
-      });
-      window.addEventListener('touchend', e => {
-        for (let t of e.changedTouches) {
-          if (t.identifier === cameraTouchId) cameraTouchId = null;
-        }
-      });
-
-      // Mouse Rotazione
-      window.addEventListener('mousedown', e => {
-        if (!e.target.closest('.interactive')) {
-          isCameraDragging = true;
-          lastTouchX = e.clientX;
-        }
-      });
-      window.addEventListener('mousemove', e => {
-        if (isCameraDragging) {
-          const dx = e.clientX - lastTouchX;
-          cameraYaw -= dx * cameraSensitivity;
-          lastTouchX = e.clientX;
-        }
-      });
-      window.addEventListener('mouseup', () => isCameraDragging = false);
-
-      // Joystick Movimento
-      const joystickZone = document.getElementById('joystick-zone');
-      const joystickStick = document.getElementById('joystick-stick');
-      let joystickTouchId = null;
-
-      joystickZone.addEventListener('touchstart', e => {
-        e.stopPropagation();
-        const t = e.changedTouches[0];
-        joystickTouchId = t.identifier;
-        updateJoystick(t);
-      });
-      window.addEventListener('touchmove', e => {
-        for (let t of e.changedTouches) {
-          if (t.identifier === joystickTouchId) updateJoystick(t);
-        }
-      });
-      window.addEventListener('touchend', e => {
-        for (let t of e.changedTouches) {
-          if (t.identifier === joystickTouchId) {
-            joystickTouchId = null;
-            moveInput = { x: 0, y: 0 };
-            joystickStick.style.top = '35px';
-            joystickStick.style.left = '35px';
-          }
-        }
-      });
-
-      function updateJoystick(t) {
-        const rect = joystickZone.getBoundingClientRect();
-        const dx = t.clientX - (rect.left + rect.width / 2);
-        const dy = t.clientY - (rect.top + rect.height / 2);
-        const dist = Math.min(45, Math.hypot(dx, dy));
-        const angle = Math.atan2(dy, dx);
-        joystickStick.style.left = `${35 + Math.cos(angle) * dist}px`;
-        joystickStick.style.top = `${35 + Math.sin(angle) * dist}px`;
-        moveInput.x = (Math.cos(angle) * dist) / 45;
-        moveInput.y = (Math.sin(angle) * dist) / 45;
-      }
-
-      window.actionPunch = function() {
-        if (punchTimer === 0) {
-          punchTimer = 18;
-          npcs.forEach(npc => {
-            const dist = Math.hypot(playerGroup.position.x - npc.mesh.position.x, playerGroup.position.z - npc.mesh.position.z);
-            if (dist < 6) {
-              npc.hitTimer = 25;
-              playerState.coins += 15;
-              updateUI();
-            }
-          });
-        }
-      };
-
-      window.actionJump = function() {
-        if (isGrounded) {
-          velocityY = jumpPower;
-          isGrounded = false;
-        }
-      };
-
-      window.actionAttack = function() { actionPunch(); };
-      window.actionBuild = function() {
-        if (playerState.coins < 50) return;
-        playerState.coins -= 50;
-        const tower = new THREE.Mesh(new THREE.CylinderGeometry(3, 4, 10, 8), new THREE.MeshStandardMaterial({ color: 0x16a34a }));
-        tower.position.copy(playerGroup.position);
-        tower.position.y = 5;
-        scene.add(tower);
-        updateUI();
-      };
-      window.actionEvolve = function() {
-        if (playerState.evoIdx >= EVOLUTIONS.length - 1) return;
-        const cost = (playerState.evoIdx + 1) * 100;
-        if (playerState.coins < cost) return;
-        playerState.coins -= cost;
-        playerState.evoIdx++;
-        playerFurMat.map = generateFurTexture(EVOLUTIONS[playerState.evoIdx].color);
-        playerGroup.scale.multiplyScalar(1.1);
-        updateUI();
-      };
-
-      function updateUI() {
-        document.getElementById('player-coins').innerText = playerState.coins;
-        document.getElementById('player-evo').innerText = EVOLUTIONS[playerState.evoIdx].name;
-      }
-
-      function checkCollision(x, z) {
-        for (let b of buildingColliders) {
-          if (x > b.minX && x < b.maxX && z > b.minZ && z < b.maxZ) return true;
-        }
-        return false;
-      }
-
-      // --- LOOP DI GIOCO ---
-      function animate() {
-        requestAnimationFrame(animate);
-
-        let kX = 0, kY = 0;
-        if (keys['KeyW'] || keys['ArrowUp']) kY -= 1;
-        if (keys['KeyS'] || keys['ArrowDown']) kY += 1;
-        if (keys['KeyA'] || keys['ArrowLeft']) kX -= 1;
-        if (keys['KeyD'] || keys['ArrowRight']) kX += 1;
-
-        const rawMx = moveInput.x || kX;
-        const rawMy = moveInput.y || kY;
-        const isMoving = Math.hypot(rawMx, rawMy) > 0.1;
-
-        if (isMoving) {
-          const mx = rawMx * Math.cos(cameraYaw) + rawMy * Math.sin(cameraYaw);
-          const mz = -rawMx * Math.sin(cameraYaw) + rawMy * Math.cos(cameraYaw);
-
-          const speed = EVOLUTIONS[playerState.evoIdx].speed;
-          const nextX = playerGroup.position.x + mx * speed;
-          const nextZ = playerGroup.position.z + mz * speed;
-
-          if (!checkCollision(nextX, playerGroup.position.z)) playerGroup.position.x = nextX;
-          if (!checkCollision(playerGroup.position.x, nextZ)) playerGroup.position.z = nextZ;
-
-          playerAngle = Math.atan2(mx, mz);
-          playerGroup.rotation.y = playerAngle;
-        }
-
-        if (punchTimer > 0) {
-          punchTimer--;
-          rightArm.rotation.x = -Math.PI / 2;
-        } else {
-          rightArm.rotation.x = 0;
-        }
-
-        if (!isGrounded || velocityY !== 0) {
-          playerGroup.position.y += velocityY;
-          velocityY += gravity;
-          if (playerGroup.position.y <= 0) {
-            playerGroup.position.y = 0;
-            velocityY = 0;
-            isGrounded = true;
-          }
-        }
-
-        npcs.forEach(npc => updateNPC_AI(npc));
-
-        // Telecamera Terza Persona stile GTA
-        const camDist = 22;
-        const camHeight = 11;
-        camera.position.x = playerGroup.position.x - Math.sin(cameraYaw) * camDist;
-        camera.position.z = playerGroup.position.z - Math.cos(cameraYaw) * camDist;
-        camera.position.y = playerGroup.position.y + camHeight;
-        camera.lookAt(playerGroup.position.x, playerGroup.position.y + 3.5, playerGroup.position.z);
-
-        let activeDistrict = 'Matrice (Centro)';
-        DISTRICTS.forEach(d => {
-          const dist = Math.hypot(playerGroup.position.x - d.x, playerGroup.position.z - d.z);
-          if (dist < d.radius) activeDistrict = d.name;
-        });
-        document.getElementById('current-district').innerText = activeDistrict;
-
-        renderer.render(scene, camera);
-      }
-
-      window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-      });
-
-      animate();
-    });
-  </script>
-</body>
-</html>
+      <div class="touch
