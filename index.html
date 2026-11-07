@@ -16,7 +16,7 @@
     }
     #game-canvas { width: 100%; height: 100%; display: block; position: absolute; top: 0; left: 0; z-index: 1; }
     
-    /* --- MENU PRINCIPALE (ORIZZONTALE) --- */
+    /* --- MENU PRINCIPALE --- */
     #main-menu {
       position: absolute;
       top: 0; left: 0; width: 100vw; height: 100vh;
@@ -27,7 +27,7 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      gap: 16px;
+      gap: 15px;
       transition: opacity 0.8s ease, transform 0.8s ease;
     }
     #main-menu.fade-out {
@@ -36,14 +36,14 @@
       pointer-events: none;
     }
     .menu-title {
-      font-size: 2.5rem;
+      font-size: 2.2rem;
       font-weight: 900;
       color: #f59e0b;
       text-align: center;
       text-shadow: 0 4px 20px rgba(245, 158, 11, 0.5);
     }
     .menu-subtitle {
-      font-size: 1.1rem;
+      font-size: 1rem;
       color: #94a3b8;
       margin-bottom: 10px;
     }
@@ -52,7 +52,7 @@
       color: #000;
       font-size: 1.2rem;
       font-weight: 800;
-      padding: 12px 48px;
+      padding: 12px 42px;
       border: none;
       border-radius: 30px;
       cursor: pointer;
@@ -83,17 +83,17 @@
     }
     .pause-title { font-size: 2rem; font-weight: 900; color: #fff; }
 
-    /* --- BARRA RESISTENZA (LAYOUT ORIZZONTALE AL CENTRO) --- */
+    /* --- BARRA RESISTENZA --- */
     .stamina-container {
       position: absolute;
       top: 12px;
       left: 50%;
       transform: translateX(-50%);
-      width: 220px;
+      width: 180px;
       background: rgba(15, 23, 42, 0.85);
       border: 2px solid rgba(255, 255, 255, 0.2);
       border-radius: 10px;
-      padding: 4px 8px;
+      padding: 4px;
       z-index: 20;
       display: flex;
       flex-direction: column;
@@ -101,7 +101,7 @@
       box-shadow: 0 4px 12px rgba(0,0,0,0.6);
     }
     .stamina-label {
-      font-size: 0.65rem;
+      font-size: 0.7rem;
       font-weight: bold;
       color: #94a3b8;
       margin-bottom: 2px;
@@ -129,7 +129,7 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      padding: 12px 20px;
+      padding: 12px 24px;
       z-index: 10;
       opacity: 0;
       transition: opacity 1s ease;
@@ -151,10 +151,10 @@
     .hud-box {
       background: rgba(15, 23, 42, 0.85);
       border: 2px solid rgba(255, 255, 255, 0.2);
-      padding: 6px 14px;
+      padding: 8px 14px;
       border-radius: 12px;
       font-weight: bold;
-      font-size: 0.85rem;
+      font-size: 0.9rem;
       backdrop-filter: blur(8px);
       box-shadow: 0 4px 12px rgba(0,0,0,0.6);
     }
@@ -162,15 +162,15 @@
     .district-hud {
       background: #dc2626;
       color: white;
-      padding: 5px 14px;
+      padding: 6px 14px;
       border-radius: 20px;
       font-weight: 900;
       text-transform: uppercase;
-      font-size: 0.8rem;
+      font-size: 0.85rem;
       box-shadow: 0 4px 12px rgba(0,0,0,0.6);
     }
 
-    /* --- MINI MAPPA IN ORIZZONTALE --- */
+    /* --- MINI MAPPA --- */
     #minimap {
       width: 90px;
       height: 90px;
@@ -195,14 +195,42 @@
       box-shadow: 0 4px 12px rgba(0,0,0,0.6);
     }
 
-    /* CONTROLLI AI LATI IN MODALITÀ LANDSCAPE */
+    /* --- PANNELLO CONTROLLI ORIZZONTALE --- */
     .controls-panel {
       display: flex;
       justify-content: space-between;
       align-items: flex-end;
       width: 100%;
-      padding-bottom: 8px;
+      padding-bottom: 5px;
     }
     .touch-joystick {
-      width: 130px;
-      height: 130px
+      width: 110px;
+      height: 110px;
+      background: rgba(255, 255, 255, 0.15);
+      border: 2px solid rgba(255, 255, 255, 0.4);
+      border-radius: 50%;
+      position: relative;
+    }
+    .joystick-stick {
+      width: 45px;
+      height: 45px;
+      background: #f59e0b;
+      border-radius: 50%;
+      position: absolute;
+      top: 32px; left: 32px;
+      box-shadow: 0 0 12px rgba(245, 158, 11, 0.8);
+    }
+    .action-grid {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .btn-action {
+      width: 50px; height: 50px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.4);
+      background: rgba(15, 23, 42, 0.85);
+      color: white;
+      font-size: 1.1rem;
+      display: flex; justify-content: center; align-items: center;
+      box-shadow: 0 4
