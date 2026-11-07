@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Canicattini Bagni 3D - Free Camera Edition</title>
+  <title>Canicattini Bagni 3D - 360 Camera Edition</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; touch-action: none; }
     html, body {
@@ -20,7 +20,7 @@
     #main-menu {
       position: absolute;
       top: 0; left: 0; width: 100vw; height: 100vh;
-      background: rgba(11, 15, 25, 0.9);
+      background: rgba(11, 15, 25, 0.95);
       backdrop-filter: blur(12px);
       z-index: 100;
       display: flex;
@@ -177,88 +177,4 @@
       top: 32px; left: 32px;
       box-shadow: 0 0 12px rgba(245, 158, 11, 0.8);
     }
-    .action-grid { display: flex; gap: 10px; align-items: center; }
-    .btn-action {
-      width: 50px; height: 50px;
-      border-radius: 50%;
-      border: 1px solid rgba(255,255,255,0.4);
-      background: rgba(15, 23, 42, 0.85);
-      color: white;
-      font-size: 1.1rem;
-      display: flex; justify-content: center; align-items: center;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.6);
-    }
-    .btn-action:active { transform: scale(0.9); }
-  </style>
-</head>
-<body>
-
-  <div id="main-menu">
-    <div class="menu-title">PET WARS 3D<br><span style="font-size:1.3rem; color:#fff;">Canicattini Bagni</span></div>
-    <div class="menu-subtitle">Free Camera Edition - Guarda ovunque!</div>
-    <button class="btn-play" onclick="startGame()">GIOCA</button>
-  </div>
-
-  <div id="pause-menu" class="interactive">
-    <h2 style="color:#fff; margin-bottom:15px; font-size:2rem;">PARTITA IN PAUSA</h2>
-    <button class="btn-play" onclick="resumeGame()">RIPRENDI</button>
-  </div>
-
-  <div class="stamina-container" id="stamina-container">
-    <div class="stamina-label" id="stamina-label">Resistenza</div>
-    <div class="stamina-bar-bg">
-      <div class="stamina-bar-fill" id="stamina-fill"></div>
-    </div>
-  </div>
-
-  <canvas id="game-canvas"></canvas>
-
-  <div class="ui-layer" id="ui-layer">
-    <div class="top-bar">
-      <div class="top-left-group">
-        <div id="minimap"><canvas id="minimap-canvas" width="90" height="90"></canvas></div>
-        <div class="hud-box">🐾 <span id="player-evo">Cane Randagio</span> | 🪙 <span id="player-coins" style="color:#f59e0b;">150</span></div>
-      </div>
-      <div style="display:flex; gap:10px; align-items:center;">
-        <div class="district-hud" id="current-district">Matrice</div>
-        <button class="btn-pause interactive" onclick="pauseGame()">⏸️</button>
-      </div>
-    </div>
-
-    <div class="controls-panel">
-      <div class="touch-joystick interactive" id="joystick-zone">
-        <div class="joystick-stick" id="joystick-stick"></div>
-      </div>
-      <div class="action-grid interactive">
-        <button class="btn-action" style="background:#3b82f6;" ontouchstart="startRunning()" ontouchend="stopRunning()" onmousedown="startRunning()" onmouseup="stopRunning()">🏃‍♂️</button>
-        <button class="btn-action" style="background:#dc2626;" onclick="actionPunch()">🥊</button>
-        <button class="btn-action" style="background:#eab308;" onclick="actionJump()">🦘</button>
-        <button class="btn-action" style="background:#16a34a;" onclick="actionBuild()">🏗️</button>
-        <button class="btn-action" style="background:#8b5cf6;" onclick="actionEvolve()">✨</button>
-      </div>
-    </div>
-  </div>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script>
-    let gameStarted = false;
-    let isPaused = false;
-    let audioCtx = null;
-
-    function initAudio() {
-      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    function playSound(type) {
-      if (!audioCtx) return;
-      try {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        const now = audioCtx.currentTime;
-        if (type === 'jump') {
-          osc.type = 'sine'; osc.frequency.setValueAtTime(150, now); osc.frequency.exponentialRampToValueAtTime(350, now + 0.15);
-          gain.gain.setValueAtTime(0.2, now); gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
-          osc.start(now); osc.stop(now + 0.15);
-        } else if (type === 'punch') {
-          osc.type = 'triangle'; osc.frequency.setValueAtTime(120, now); osc.frequency.linearRampToValueAtTime(40, now + 0.1);
-          gain.gain.setValueAtTime(0.
+    .action-grid { display: flex; gap: 10px; align-items: center
