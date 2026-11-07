@@ -86,35 +86,3 @@
     .btn-action {
       width: 55px; height: 55px;
       border-radius: 50%;
-      border: 2px solid rgba(255,255,255,0.4);
-      background: rgba(0, 0, 0, 0.75);
-      color: white;
-      font-size: 1.2rem;
-      display: flex; justify-content: center; align-items: center;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.6);
-    }
-    .btn-action:active { transform: scale(0.9); }
-    .btn-punch { background: #dc2626; font-size: 1.4rem; }
-    .btn-bld { background: #16a34a; }
-    .btn-jmp { background: #eab308; }
-  </style>
-</head>
-<body>
-
-  <canvas id="game-canvas"></canvas>
-
-  <div class="ui-layer">
-    <div class="top-bar">
-      <div class="hud-box">🐾 <span id="player-evo">Cane Randagio</span> | 🪙 <span class="gold" id="player-coins">150</span></div>
-      <div class="district-hud" id="current-district">Matrice</div>
-    </div>
-
-    <div class="controls-panel">
-      <div class="touch-joystick interactive" id="joystick-zone">
-        <div class="joystick-stick" id="joystick-stick"></div>
-      </div>
-      <div class="action-grid interactive">
-        <button class="btn-action btn-punch" onclick="actionPunch()">🥊</button>
-        <button class="btn-action btn-jmp" onclick="actionJump()">🦘</button>
-        <button class="btn-action btn-bld" onclick="actionBuild()">🏗️</button>
-        <button class="btn-action" style="background:#8b5cf6;" onclick="actionEvolve()">✨</
