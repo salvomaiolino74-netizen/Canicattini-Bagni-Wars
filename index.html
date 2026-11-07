@@ -22,19 +22,18 @@
       top: 0; left: 0; width: 100vw; height: 100vh;
       background: rgba(11, 15, 25, 0.75);
       backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
       z-index: 100;
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
       gap: 20px;
-      transition: opacity 0.5s ease;
+      transition: opacity 0.8s ease, transform 0.8s ease;
     }
-    #main-menu.hidden {
+    #main-menu.fade-out {
       opacity: 0;
+      transform: scale(1.05);
       pointer-events: none;
-      display: none !important;
     }
     .menu-title {
       font-size: 2.2rem;
@@ -58,7 +57,7 @@
       border-radius: 30px;
       cursor: pointer;
       box-shadow: 0 4px 20px rgba(245, 158, 11, 0.4);
-      transition: transform 0.1s ease;
+      transition: transform 0.2s;
     }
     .btn-play:active { transform: scale(0.95); }
 
@@ -68,23 +67,26 @@
       top: 0; left: 0; width: 100vw; height: 100vh;
       background: rgba(0, 0, 0, 0.8);
       backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
       z-index: 90;
-      display: none;
+      display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
       gap: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
     }
     #pause-menu.visible {
-      display: flex !important;
+      opacity: 1;
+      pointer-events: auto;
     }
     .pause-title { font-size: 2rem; font-weight: 900; color: #fff; }
 
     /* --- BARRA RESISTENZA (STAMINA) IN ALTO AL CENTRO --- */
     .stamina-container {
       position: absolute;
-      top: 12px;
+      top: 16px;
       left: 50%;
       transform: translateX(-50%);
       width: 180px;
@@ -93,13 +95,13 @@
       border-radius: 10px;
       padding: 4px;
       z-index: 20;
-      display: none;
+      display: flex;
       flex-direction: column;
       align-items: center;
       box-shadow: 0 4px 12px rgba(0,0,0,0.6);
     }
     .stamina-label {
-      font-size: 0.65rem;
+      font-size: 0.7rem;
       font-weight: bold;
       color: #94a3b8;
       margin-bottom: 2px;
@@ -116,7 +118,7 @@
       width: 100%;
       height: 100%;
       background: #3b82f6;
-      transition: width 0.05s linear;
+      transition: width 0.1s linear;
     }
 
     /* --- INTERFACCIA DI GIOCO --- */
@@ -130,7 +132,7 @@
       padding: 16px;
       z-index: 10;
       opacity: 0;
-      transition: opacity 0.5s ease;
+      transition: opacity 1s ease;
     }
     .ui-layer.visible { opacity: 1; }
     .interactive { pointer-events: auto; }
@@ -140,7 +142,7 @@
       justify-content: space-between;
       align-items: flex-start;
       gap: 10px;
-      margin-top: 30px;
+      margin-top: 35px;
     }
     .top-left-group {
       display: flex;
@@ -153,7 +155,7 @@
       padding: 8px 14px;
       border-radius: 12px;
       font-weight: bold;
-      font-size: 0.85rem;
+      font-size: 0.9rem;
       backdrop-filter: blur(8px);
       box-shadow: 0 4px 12px rgba(0,0,0,0.6);
     }
@@ -165,16 +167,82 @@
       border-radius: 20px;
       font-weight: 900;
       text-transform: uppercase;
-      font-size: 0.8rem;
+      font-size: 0.85rem;
       box-shadow: 0 4px 12px rgba(0,0,0,0.6);
     }
 
     /* --- MINI MAPPA --- */
     #minimap {
-      width: 100px;
-      height: 100px;
+      width: 110px;
+      height: 110px;
       background: rgba(15, 23, 42, 0.9);
       border: 2px solid rgba(255, 255, 255, 0.3);
       border-radius: 50%;
       position: relative;
-      overflow: hidden
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+    }
+    #minimap-canvas { width: 100%; height: 100%; display: block; }
+
+    .btn-pause {
+      background: rgba(15, 23, 42, 0.85);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      color: white;
+      width: 45px; height: 45px;
+      border-radius: 50%;
+      font-size: 1.2rem;
+      display: flex; justify-content: center; align-items: center;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+    }
+
+    .controls-panel {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      width: 100%;
+      padding-bottom: 10px;
+    }
+    .touch-joystick {
+      width: 120px;
+      height: 120px;
+      background: rgba(255, 255, 255, 0.15);
+      border: 2px solid rgba(255, 255, 255, 0.4);
+      border-radius: 50%;
+      position: relative;
+    }
+    .joystick-stick {
+      width: 50px;
+      height: 50px;
+      background: #f59e0b;
+      border-radius: 50%;
+      position: absolute;
+      top: 35px; left: 35px;
+      box-shadow: 0 0 12px rgba(245, 158, 11, 0.8);
+    }
+    .action-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 55px);
+      gap: 10px;
+    }
+    .btn-action {
+      width: 55px; height: 55px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.4);
+      background: rgba(15, 23, 42, 0.85);
+      color: white;
+      font-size: 1.2rem;
+      display: flex; justify-content: center; align-items: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+    }
+    .btn-action:active { transform: scale(0.9); }
+    .btn-punch { background: #dc2626; font-size: 1.4rem; }
+    .btn-bld { background: #16a34a; }
+    .btn-jmp { background: #eab308; }
+    .btn-run { background: #3b82f6; font-size: 1.3rem; }
+  </style>
+</head>
+<body>
+
+  <!-- Menu Principale -->
+  <div id="main-menu
